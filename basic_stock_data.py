@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import time
 import requests
 from lxml import etree
+import re
 
 from downloader import bao_d, xueqiu_d
 from code_formmat import code_formatter
@@ -77,29 +78,33 @@ class BaiscStockData:
 
     def get_stock_detail_from_dongcai(self, df):
         for code in df.index.values.tolist():
+            print(f'get stock detail of {code}')
             code_without_point = code_formatter.code2nopoint(code)
-            df[code, 'industry'] = self.get_industry(code_without_point)
-            df[code, 'concept'] = self.get_concept(code_without_point)
+            # df[code, 'industry'] = self.get_industry(code_without_point)
+            df[code, 'concept'], df[code, 'industry'] = self.get_concept_industy(
+                code_without_point)
         return df
 
     def get_industry(self, code):
-        rsp = self.session.get(
-            f'http://quote.eastmoney.com/{code}.html')
+        url = f'http://quote.eastmoney.com/{code}.html'
+        rsp = self.session.get(url)
         if rsp.status_code == 200:
             selector = etree.HTML(rsp.text.encode('utf-8'))
-            industry = selector.xpath('//div[@class="xggpbox"]//td')
+            industry = selector.xpath('//div[@class="nav"]//a/text()')[2]
             return industry
 
-    def get_concept(self, code):
-        rsp = self.session.get(
-            f'http://f10.eastmoney.com/OperationsRequired/Index?type=web&code={code}')
+    def get_concept_industy(self, code):
+        url = f'http://f10.eastmoney.com/CoreConception/CoreConceptionAjax?code={code}'
+        rsp = self.session.get(url)
         if rsp.status_code == 200:
-            selector = etree.HTML(rsp.text.encode('utf-8'))
-            concept = selector.xpath('//div[@class="xggpbox"]//td')
-            return concept
+            concept_list = rsp.json()['hxtc']
+            concept = ','.join(re.split(r'\s+', concept_list[0]['ydnr']))
+            industry = concept_list[3]['gjc']
+            return concept, industry
 
 
 if __name__ == '__main__':
     basic = BaiscStockData()
     basic.hs300_index_component()
     basic.zz500_index_component()
+    'http://quote.eastmoney.com/sh688008.html'
