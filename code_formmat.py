@@ -3,11 +3,11 @@ import re
 
 class Formatter:
     def code2capita(self, code):
-        m = re.match('(\S{2})\.(\d{6})', code)
+        m = re.match(r'(\S{2})\.(\d{6})', code)
         return (m.group(1)+m.group(2)).upper()
 
     def code2nopoint(self, code):
-        m = re.match('(\S{2})\.(\d{6})', code)
+        m = re.match(r'(\S{2})\.(\d{6})', code)
         return m.group(1)+m.group(2)
 
 
