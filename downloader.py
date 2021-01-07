@@ -61,7 +61,7 @@ class BaoDownloader:
             # self.download_dayline_from_bao2file(code, 'hs300_d')
             code_without_point = code_formatter.code2nopoint(code)
             result.loc[code,
-                       'url'] = f'http://quote.eastmoney.com/concept/{code_without_point}.html'
+                       'url'] = f'http://quote.eastmoney.com/{code_without_point}.html'
             rs = bs.query_stock_industry(code)
             industry_list = []
             while (rs.error_code == '0') & rs.next():
@@ -93,7 +93,7 @@ class BaoDownloader:
             # self.download_dayline_from_bao2file(s, 'zz500_d')
             code_without_point = code_formatter.code2nopoint(code)
             result.loc[code,
-                       'url'] = f'http://quote.eastmoney.com/concept/{code_without_point}.html'
+                       'url'] = f'http://quote.eastmoney.com/{code_without_point}.html'
             rs = bs.query_stock_industry(code)
             industry_list = []
             while (rs.error_code == '0') & rs.next():
