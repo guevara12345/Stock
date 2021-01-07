@@ -58,6 +58,8 @@ class Reporter:
         return df
 
     def save2file(self, filename, df: pd.DataFrame):
+        df = df[['code_name', 'industry', 'url', 'highest_date', 'price',
+                 '(p-ma21)/p',	'(p-ma13)/p', 'diff/p', 'pe', 'pb', 'concept']]
         with pd.ExcelWriter(os.path.join(os.getcwd(), f'raw_data/{filename}.xlsx'),
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter') as writer:

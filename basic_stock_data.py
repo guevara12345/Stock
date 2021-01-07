@@ -80,9 +80,10 @@ class BaiscStockData:
         for code in df.index.values.tolist():
             print(f'get stock detail of {code}')
             code_without_point = code_formatter.code2nopoint(code)
-            # df[code, 'industry'] = self.get_industry(code_without_point)
-            df[code, 'concept'], df[code, 'industry'] = self.get_concept_industy(
-                code_without_point)
+            df.loc[code, 'industry'] = self.get_industry(code_without_point)
+            df.loc[code, 'concept'] = self.get_concept(code_without_point)
+            df.loc[code,
+                   'url'] = f'http://quote.eastmoney.com/{code_without_point}.html'
         return df
 
     def get_industry(self, code):
@@ -90,21 +91,23 @@ class BaiscStockData:
         rsp = self.session.get(url)
         if rsp.status_code == 200:
             selector = etree.HTML(rsp.text.encode('utf-8'))
-            industry = selector.xpath('//div[@class="nav"]//a/text()')[2]
-            return industry
+            text_list = selector.xpath('//div[@class="nav"]//a/text()')
+            if len(text_list) >= 3:
+                industry = text_list[2]
+                return industry
 
-    def get_concept_industy(self, code):
+    def get_concept(self, code):
         url = f'http://f10.eastmoney.com/CoreConception/CoreConceptionAjax?code={code}'
         rsp = self.session.get(url)
         if rsp.status_code == 200:
             concept_list = rsp.json()['hxtc']
-            concept = ','.join(re.split(r'\s+', concept_list[0]['ydnr']))
-            industry = concept_list[3]['gjc']
-            return concept, industry
+            for i in concept_list:
+                if i['gjc'] == '所属板块':
+                    concept = ','.join(re.split(r'\s+', i['ydnr']))
+                    return concept
 
 
 if __name__ == '__main__':
     basic = BaiscStockData()
     basic.hs300_index_component()
     basic.zz500_index_component()
-    'http://quote.eastmoney.com/sh688008.html'
