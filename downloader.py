@@ -62,10 +62,17 @@ class BaoDownloader:
             code_without_point = code_formatter.code2nopoint(code)
             result.loc[code,
                        'url'] = f'http://quote.eastmoney.com/concept/{code_without_point}.html'
+            rs = bs.query_stock_industry(code)
+            industry_list = []
+            while (rs.error_code == '0') & rs.next():
+                # 获取一条记录，将记录合并在一起
+                industry_list.append(rs.get_row_data())
+            result.loc[code, 'industryClassification'] = industry_list[0][3]
+            print(f'get stock info of {code}')
 
         # 结果集输出到csv文件
         result.to_csv(
-            os.path.join(os.getcwd(), 'raw_data/hs300_stocks.csv'),
+            os.path.join(os.getcwd(), f'raw_data/hs300_stocks.csv'),
             encoding="gbk")
         # print(result)
 
@@ -87,9 +94,17 @@ class BaoDownloader:
             code_without_point = code_formatter.code2nopoint(code)
             result.loc[code,
                        'url'] = f'http://quote.eastmoney.com/concept/{code_without_point}.html'
+            rs = bs.query_stock_industry(code)
+            industry_list = []
+            while (rs.error_code == '0') & rs.next():
+                # 获取一条记录，将记录合并在一起
+                industry_list.append(rs.get_row_data())
+            result.loc[code, 'industryClassification'] = industry_list[0][3]
+            print(f'get stock info of {code}')
+
         # 结果集输出到csv文件
         result.to_csv(
-            os.path.join(os.getcwd(), 'raw_data/zz500_stocks.csv'),
+            os.path.join(os.getcwd(), f'raw_data/zz500_stocks.csv'),
             encoding="gbk")
         # print(result)
 
@@ -111,16 +126,18 @@ class XueqiuDownloader:
 
     def download_dkline_from_xueqiu(self, capital_code, day_num):
         XUEQIU_D_KLINE_URL_FORMAT = '''
-            https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol={}&begin={}&period=day&
-            type=before&count={}&indicator=kline,pe,pb,ps,pcf,market_capital,agt,ggt,balance
+            https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol={}&begin={}&period=day&type=before&count={}&indicator=kline,pe,pb,ps,pcf,market_capital,agt,ggt,balance
             '''
         url = XUEQIU_D_KLINE_URL_FORMAT.format(
-            capital_code, int(time.time()), day_num)
+            capital_code, int(time.time()*1000), -day_num)
         rsp = self.session.get(url)
         if rsp.status_code == 200:
+            print(
+                f'download {day_num} days history day_kline data of {capital_code}')
             dkline_json = rsp.json()
             result = pd.DataFrame(
                 dkline_json['data']['item'], columns=dkline_json['data']['column'])
+            result['date'] = pd.to_datetime(result['timestamp'], unit='ms')
             return result
 
 
@@ -129,7 +146,7 @@ xueqiu_d = XueqiuDownloader()
 
 if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
-    # bao_d.hs300_index_component()
-    # bao_d.zz500_index_component()
+    bao_d.hs300_index_component()
+    bao_d.zz500_index_component()
     # bao_d.get_from_xls('000300')
-    xueqiu_d.download_dkline_from_xueqiu('SH600438', 52*5)
+    # xueqiu_d.download_dkline_from_xueqiu('SH600438', 52*5)
