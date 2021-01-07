@@ -44,70 +44,6 @@ class BaoDownloader:
         result = pd.DataFrame(data_list, columns=rs.fields)
         return result
 
-    def hs300_index_component(self):
-        # 获取沪深300成分股
-        rs = bs.query_hs300_stocks()
-        print(f'hs300_index_component, error_code:{rs.error_code}')
-
-        # 打印结果集
-        hs300_stocks = []
-        while (rs.error_code == '0') & rs.next():
-            # 获取一条记录，将记录合并在一起
-            hs300_stocks.append(rs.get_row_data())
-        result = pd.DataFrame(hs300_stocks, columns=rs.fields)
-
-        result = result.set_index("code")
-        for code in result.index.values.tolist():
-            # self.download_dayline_from_bao2file(code, 'hs300_d')
-            code_without_point = code_formatter.code2nopoint(code)
-            result.loc[code,
-                       'url'] = f'http://quote.eastmoney.com/{code_without_point}.html'
-            rs = bs.query_stock_industry(code)
-            industry_list = []
-            while (rs.error_code == '0') & rs.next():
-                # 获取一条记录，将记录合并在一起
-                industry_list.append(rs.get_row_data())
-            result.loc[code, 'industryClassification'] = industry_list[0][3]
-            print(f'get stock info of {code}')
-
-        # 结果集输出到csv文件
-        result.to_csv(
-            os.path.join(os.getcwd(), f'raw_data/hs300_stocks.csv'),
-            encoding="gbk")
-        # print(result)
-
-    def zz500_index_component(self):
-        # 获取中证500成分股
-        rs = bs.query_zz500_stocks()
-        print(f'zz500_index_component, error_code:{rs.error_code}')
-
-        # 打印结果集
-        zz500_stocks = []
-        while (rs.error_code == '0') & rs.next():
-            # 获取一条记录，将记录合并在一起
-            zz500_stocks.append(rs.get_row_data())
-        result = pd.DataFrame(zz500_stocks, columns=rs.fields)
-
-        result = result.set_index("code")
-        for code in result.index.values.tolist():
-            # self.download_dayline_from_bao2file(s, 'zz500_d')
-            code_without_point = code_formatter.code2nopoint(code)
-            result.loc[code,
-                       'url'] = f'http://quote.eastmoney.com/{code_without_point}.html'
-            rs = bs.query_stock_industry(code)
-            industry_list = []
-            while (rs.error_code == '0') & rs.next():
-                # 获取一条记录，将记录合并在一起
-                industry_list.append(rs.get_row_data())
-            result.loc[code, 'industryClassification'] = industry_list[0][3]
-            print(f'get stock info of {code}')
-
-        # 结果集输出到csv文件
-        result.to_csv(
-            os.path.join(os.getcwd(), f'raw_data/zz500_stocks.csv'),
-            encoding="gbk")
-        # print(result)
-
     def get_from_xls(self, code):
         with pd.ExcelFile("D:\\MyProj\\Stock\\raw_data\\K线导出_{}_日线数据.xls".
                           format(code)) as xls:
@@ -146,7 +82,5 @@ xueqiu_d = XueqiuDownloader()
 
 if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
-    bao_d.hs300_index_component()
-    bao_d.zz500_index_component()
     # bao_d.get_from_xls('000300')
     # xueqiu_d.download_dkline_from_xueqiu('SH600438', 52*5)
