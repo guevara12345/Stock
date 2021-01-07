@@ -83,4 +83,4 @@ xueqiu_d = XueqiuDownloader()
 if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
     # bao_d.get_from_xls('000300')
-    # xueqiu_d.download_dkline_from_xueqiu('SH600438', 52*5)
+    xueqiu_d.download_dkline_from_xueqiu('SH600438', 52*5)
