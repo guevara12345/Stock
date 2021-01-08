@@ -21,6 +21,9 @@ class BaiscStockData:
         self.session.headers.update(
             {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'})
         self.session.get('https://www.eastmoney.com/')
+        self.NO_INTEREST_CONCEPT = [
+            'HS300_', 'MSCI中国', '标普概念', '富时概念', '中证500',
+            '融资融券', '上证180_', '上证50_', '上证380']
 
     def hs300_index_component(self):
         # 获取沪深300成分股
@@ -103,8 +106,10 @@ class BaiscStockData:
             concept_list = rsp.json()['hxtc']
             for i in concept_list:
                 if i['gjc'] == '所属板块':
-                    concept = ','.join(re.split(r'\s+', i['ydnr']))
-                    return concept
+                    concept_list = re.split(r'\s+', i['ydnr'])
+                    f = list(
+                            set([x for x in concept_list if x not in self.NO_INTEREST_CONCEPT]))
+                    return ','.join(f)
 
 
 if __name__ == '__main__':

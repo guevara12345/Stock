@@ -10,6 +10,8 @@ from code_formmat import code_formatter
 
 from strategy_new_highest import new_high
 from strategy_double_ma import double_ma
+from strategy_volatility_vol import vol
+from get_config import config
 
 
 class Reporter:
@@ -37,6 +39,22 @@ class Reporter:
             datetime.now().strftime('%Y%B%d'), int(time.time()))
         self.save2file(filename, zz500_df)
 
+    def generate_holding_stock_report(self):
+        print('start generate zz500 report')
+        zz500_df = pd.read_csv(os.path.join(
+            os.getcwd(), 'raw_data/zz500_stocks.csv'), index_col=1, encoding="gbk")
+        hs300_df = pd.read_csv(os.path.join(
+            os.getcwd(), 'raw_data/hs300_stocks.csv'), index_col=1, encoding="gbk")
+        df = pd.concat([zz500_df, hs300_df])
+        df = df.set_index("code")
+        holding_stocks = config.get_stocks()
+        holding_df = df[df.index in holding_stocks]
+        holding_df = self.apply_strategy(holding_df)
+
+        filename = 'holding_report_{}_{}'.format(
+            datetime.now().strftime('%Y%B%d'), int(time.time()))
+        self.save2file(filename, holding_df)
+
     def apply_strategy(self, df):
         for code in df.index.values.tolist():
             capital_code = code_formatter.code2capita(code)
@@ -55,11 +73,14 @@ class Reporter:
                 by='date', ascending=False).iloc[0]['pe']
             df.loc[code, 'pb'] = stock_df.sort_values(
                 by='date', ascending=False).iloc[0]['pb']
+
+            df.loc[code, 'std20'] = vol.count_volatility(stock_df)
         return df
 
     def save2file(self, filename, df: pd.DataFrame):
-        df = df[['code_name', 'industry', 'url', 'highest_date', 'price',
-                 '(p-ma21)/p',	'(p-ma13)/p', 'diff/p', 'pe', 'pb', 'concept']]
+        df = df[['code_name', 'industry', 'highest_date', 'price', '(p-ma21)/p',
+                 '(p-ma13)/p', 'diff/p', 'std20', 'pe', 'pb',
+                 'url']]
         with pd.ExcelWriter(os.path.join(os.getcwd(), f'raw_data/{filename}.xlsx'),
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter') as writer:
@@ -71,15 +92,20 @@ class Reporter:
             worksheet = writer.sheets['Sheet1']
 
             # Add some cell formats.
-            format1 = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+            # format1 = workbook.add_format({'num_format': 'yyyy-mm-dd'})
             format2 = workbook.add_format({'num_format': '0.00%'})
+            # row_format = workbook.add_format({'bg_color': 'green'})
 
             # Note: It isn't possible to format any cells that already have a format such
             # as the index or headers or any cells that contain dates or datetimes.
 
             # Set the format but not the column width.
-            worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('G:I', None, format2)
+            # worksheet.set_column('E:E', None, format1)
+            worksheet.set_column('F:I', None, format2)
+            # worksheet.set_row(0, None, row_format)
+
+            # Freeze the first row.
+            worksheet.freeze_panes(1, 0)
 
             # Close the Pandas Excel writer and output the Excel file.
             writer.save()
