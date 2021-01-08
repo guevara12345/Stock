@@ -83,7 +83,8 @@ class Reporter:
                  'url']]
         with pd.ExcelWriter(os.path.join(os.getcwd(), f'raw_data/{filename}.xlsx'),
                             datetime_format='yyyy-mm-dd',
-                            engine='xlsxwriter') as writer:
+                            engine='xlsxwriter',
+                            options={'remove_timezone': True}) as writer:
             # Convert the dataframe to an XlsxWriter Excel object.
             df.to_excel(writer, encoding="gbk", sheet_name='Sheet1')
 
@@ -114,4 +115,4 @@ class Reporter:
 if __name__ == '__main__':
     r = Reporter()
     r.generate_hs300_report()
-    r.generate_zz500_report()
+    # r.generate_zz500_report()

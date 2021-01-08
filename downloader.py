@@ -1,6 +1,6 @@
 import baostock as bs
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, tzinfo
 import time
 import os
 import json
@@ -64,8 +64,9 @@ class XueqiuDownloader:
         XUEQIU_D_KLINE_URL_FORMAT = '''
             https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol={}&begin={}&period=day&type=before&count={}&indicator=kline,pe,pb,ps,pcf,market_capital,agt,ggt,balance
             '''
+        timestamp = int(((datetime.now()+timedelta(days=1)).timestamp())*1000)
         url = XUEQIU_D_KLINE_URL_FORMAT.format(
-            capital_code, int(time.time()*1000), -day_num)
+            capital_code, timestamp, -day_num)
         rsp = self.session.get(url)
         if rsp.status_code == 200:
             print(
@@ -73,7 +74,9 @@ class XueqiuDownloader:
             dkline_json = rsp.json()
             result = pd.DataFrame(
                 dkline_json['data']['item'], columns=dkline_json['data']['column'])
-            result['date'] = pd.to_datetime(result['timestamp'], unit='ms')
+            # 时区硬转utc+8，excel不支持时区信息
+            result['date'] = pd.to_datetime(
+                result['timestamp']+(8*3600)*1000, unit='ms')
             return result
 
 
