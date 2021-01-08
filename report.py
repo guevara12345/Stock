@@ -115,4 +115,4 @@ class Reporter:
 if __name__ == '__main__':
     r = Reporter()
     r.generate_hs300_report()
-    # r.generate_zz500_report()
+    r.generate_zz500_report()
