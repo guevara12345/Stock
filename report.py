@@ -8,9 +8,7 @@ import xlsxwriter
 from downloader import bao_d, xueqiu_d
 from code_formmat import code_formatter
 
-from strategy_new_highest import new_high
-from strategy_double_ma import double_ma
-from strategy_volatility_vol import vol
+from strategy_basic import new_high, double_ma, vol
 from get_config import config
 
 
