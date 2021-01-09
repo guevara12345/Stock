@@ -64,7 +64,7 @@ class StockReporter:
 
             a, b = double_ma.double_ma_13_21(stock_df)
             df.loc[code, 'price'] = a[0]
-            df.loc[code, 'chg_rate'] = a[1]
+            df.loc[code, 'chg_rate'] = a[1]/100
             df.loc[code, '(p-ma21)/p'] = b[0]
             df.loc[code, '(p-ma13)/p'] = b[1]
             df.loc[code, 'diff/p'] = b[2]
@@ -149,7 +149,7 @@ class EtfIndexReporter:
 
             a, b = double_ma.double_ma_13_21(single_etf_index_df_dict[code])
             etf_index_df.loc[code, 'price'] = a[0]
-            etf_index_df.loc[code, 'chg_rate'] = a[1]
+            etf_index_df.loc[code, 'chg_rate'] = a[1]/100
             etf_index_df.loc[code, '(p-ma21)/p'] = b[0]
             etf_index_df.loc[code, '(p-ma13)/p'] = b[1]
             etf_index_df.loc[code, 'diff/p'] = b[2]
@@ -182,7 +182,7 @@ class EtfIndexReporter:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('F:J', None, format2)
+            worksheet.set_column('E:J', None, format2)
             # worksheet.set_row(0, None, row_format)
 
             # Freeze the first row.
@@ -193,9 +193,9 @@ class EtfIndexReporter:
 
 
 if __name__ == '__main__':
-    # sr = StockReporter()
-    # sr.generate_hs300_report()
-    # sr.generate_zz500_report()
+    sr = StockReporter()
+    sr.generate_hs300_report()
+    sr.generate_zz500_report()
 
     eir = EtfIndexReporter()
     eir.generate_etf_index_report()
