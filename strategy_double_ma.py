@@ -16,8 +16,9 @@ class StrategyDoubleMa:
         df = df.sort_values(by='date', ascending=False)
         a = (
             df.iloc[0]['close'],
+            df.iloc[0]['percent'],
             df.iloc[0]['MA13'],
-            df.iloc[0]['MA21']
+            df.iloc[0]['MA21'],
         )
         b = (
             df.iloc[0]['PRICE-MA21']/df.iloc[0]['close'],
