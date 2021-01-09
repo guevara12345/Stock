@@ -6,13 +6,13 @@ import configparser
 
 class Config:
     def __init__(self):
-        self.__cf = configparser.ConfigParser()
-        self.__cf.read('config.ini')
-        stocks = self.__cf['holding_stocks']['stocks']
-        self.__stock_list = stocks.split(',')
+        with open('config.json', 'r', encoding='utf-8') as f:
+            d_data = json.loads(f.read())
+            self.__wangtching_etf_index = d_data['wangtching_etf_index']
 
-    def get_stocks(self):
-        return self.__stock_list
+    @property
+    def wangtching_etf_index(self):
+        return self.__wangtching_etf_index
 
 
 config = Config()
