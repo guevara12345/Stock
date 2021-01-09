@@ -8,11 +8,16 @@ import xlsxwriter
 from downloader import bao_d, xueqiu_d
 from code_formmat import code_formatter
 
-from strategy_basic import new_high, double_ma, vol
+from strategy_basic import new_high, double_ma, vol, hk
 from get_config import config
 
 
 class StockReporter:
+    def debug_stock(self, code):
+        print('start debug_stock')
+        stock_df = pd.DataFrame(index=[code, ])
+        stock_df = self.apply_strategy4stocks(stock_df)
+
     def generate_hs300_report(self):
         print('start generate hs300 report')
         hs300_df = pd.read_csv(os.path.join(
@@ -73,13 +78,22 @@ class StockReporter:
                 by='date', ascending=False).iloc[0]['pb']
 
             df.loc[code, 'std20'] = vol.count_volatility(stock_df)
+            c = hk.count_hk_holding_rate(stock_df)
+            if c is not None:
+                df.loc[code, 'hk_ratio'] = c[0]/100
+                df.loc[code, 'hk-ma(hk,10)'] = c[1]/100
+                df.loc[code, 'hk-ma(hk,30)'] = c[2]/100
         return df
 
     def save2file(self, filename, df: pd.DataFrame):
+        folder_name = datetime.now().strftime('%Y%B%d')
+        if not os.path.exists(f'./raw_data/{folder_name}'):
+            os.mkdir(f'./raw_data/{folder_name}')
+
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
                  '(p-ma21)/p', '(p-ma13)/p', 'diff/p', 'std20', 'pe',
-                 'pb', 'url']]
-        with pd.ExcelWriter(os.path.join(os.getcwd(), f'raw_data/{filename}.xlsx'),
+                 'pb', 'hk_ratio', 'hk-ma(hk,10)', 'hk-ma(hk,30)', 'url']]
+        with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
                             options={'remove_timezone': True}) as writer:
@@ -101,10 +115,11 @@ class StockReporter:
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
             worksheet.set_column('F:J', None, format2)
+            worksheet.set_column('M:O', None, format2)
             # worksheet.set_row(0, None, row_format)
 
             # Freeze the first row.
-            worksheet.freeze_panes(1, 0)
+            worksheet.freeze_panes(1, 3)
 
             # Close the Pandas Excel writer and output the Excel file.
             writer.save()
@@ -157,9 +172,13 @@ class EtfIndexReporter:
         return etf_index_df
 
     def save2file(self, filename, df: pd.DataFrame):
+        folder_name = datetime.now().strftime('%Y%B%d')
+        if not os.path.exists(f'./raw_data/{folder_name}'):
+            os.mkdir(f'./raw_data/{folder_name}')
+
         df = df[['code_name', 'highest_date', 'price', 'chg_rate',
                  '(p-ma21)/p', '(p-ma13)/p', 'diff/p', 'std20', 'url']]
-        with pd.ExcelWriter(os.path.join(os.getcwd(), f'raw_data/{filename}.xlsx'),
+        with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
                             options={'remove_timezone': True}) as writer:
@@ -197,3 +216,5 @@ if __name__ == '__main__':
 
     eir = EtfIndexReporter()
     eir.generate_etf_index_report()
+
+    # sr.debug_stock('sh.603288')

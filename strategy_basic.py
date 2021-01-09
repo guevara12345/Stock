@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from datetime import datetime, timedelta
 import time
+import numpy as np
 
 from downloader import bao_d, xueqiu_d
 from code_formmat import code_formatter
@@ -62,6 +63,21 @@ class StrategyVolatilityVol:
         pass
 
 
+class StrategyHkHolding:
+    def count_hk_holding_rate(self, df):
+        df['hold_ratio_ma10'] = df['hold_ratio_cn'].ewm(
+            span=5, adjust=False).mean()
+        df['hold_ratio_ma30'] = df['hold_ratio_cn'].ewm(
+            span=15, adjust=False).mean()
+        df = df.sort_values(by='date', ascending=False)
+        if df.iloc[1]['hold_ratio_cn'] is not None:
+            r = (df.iloc[1]['hold_ratio_cn'],
+                 df.iloc[1]['hold_ratio_cn']-df.iloc[1]['hold_ratio_ma10'],
+                 df.iloc[1]['hold_ratio_cn']-df.iloc[1]['hold_ratio_ma30'])
+            return r
+
+
 vol = StrategyVolatilityVol()
 double_ma = StrategyDoubleMa()
 new_high = StrategyNewHighest()
+hk = StrategyHkHolding()
