@@ -27,7 +27,7 @@ class StockReporter:
         hs300_df = self.apply_strategy4stocks(hs300_df)
 
         filename = 'hs300_report_{}_{}'.format(
-            datetime.now().strftime('%Y%B%d'), int(time.time()))
+            datetime.now().strftime('%Y%b%d'), int(time.time()))
         self.save2file(filename, hs300_df)
 
     def generate_zz500_report(self):
@@ -39,7 +39,7 @@ class StockReporter:
         zz500_df = self.apply_strategy4stocks(zz500_df)
 
         filename = 'zz500_report_{}_{}'.format(
-            datetime.now().strftime('%Y%B%d'), int(time.time()))
+            datetime.now().strftime('%Y%b%d'), int(time.time()))
         self.save2file(filename, zz500_df)
 
     def generate_holding_stock_report(self):
@@ -54,7 +54,7 @@ class StockReporter:
         holding_df = self.apply_strategy4stocks(holding_df)
 
         filename = 'holding_report_{}_{}'.format(
-            datetime.now().strftime('%Y%B%d'), int(time.time()))
+            datetime.now().strftime('%Y%b%d'), int(time.time()))
         self.save2file(filename, holding_df)
 
     def apply_strategy4stocks(self, df):
@@ -86,7 +86,7 @@ class StockReporter:
         return df
 
     def save2file(self, filename, df: pd.DataFrame):
-        folder_name = datetime.now().strftime('%Y%B%d')
+        folder_name = datetime.now().strftime('%Y%b%d')
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
@@ -152,7 +152,7 @@ class EtfIndexReporter:
             etf_index_df, single_etf_index_df_dict)
 
         filename = 'etf_index_report_{}_{}'.format(
-            datetime.now().strftime('%Y%B%d'), int(time.time()))
+            datetime.now().strftime('%Y%b%d'), int(time.time()))
         self.save2file(filename, etf_index_df)
 
     def apply_strategy(self, etf_index_df, single_etf_index_df_dict):
@@ -172,7 +172,7 @@ class EtfIndexReporter:
         return etf_index_df
 
     def save2file(self, filename, df: pd.DataFrame):
-        folder_name = datetime.now().strftime('%Y%B%d')
+        folder_name = datetime.now().strftime('%Y%b%d')
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
