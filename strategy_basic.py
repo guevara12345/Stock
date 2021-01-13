@@ -60,7 +60,11 @@ class StrategyVolatilityVol:
         return a/100
 
     def count_quantity_ratio(self, df):
-        pass
+        df['max_qr5'] = df['percent'].ewm(
+            span=20, adjust=False).std()
+        df = df.sort_values(by='date', ascending=False)
+        a = df.iloc[0]['STD20']
+        return a/100
 
 
 class StrategyHkHolding:
