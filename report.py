@@ -8,7 +8,7 @@ import xlsxwriter
 from downloader import bao_d, xueqiu_d
 from code_formmat import code_formatter
 
-from strategy_basic import new_high, double_ma, vol, hk
+from strategy_basic import new_high, double_ma, vol, hk, pe_pb
 from get_config import config
 
 
@@ -18,29 +18,41 @@ class StockReporter:
         stock_df = pd.DataFrame(index=[code, ])
         stock_df = self.apply_strategy4stocks(stock_df)
 
-    def generate_hs300_report(self):
+    def apply_strategy4hs300(self):
         print('start generate hs300 report')
         hs300_df = pd.read_csv(os.path.join(
             os.getcwd(), 'raw_data/hs300_stocks.csv'), index_col=1, encoding="gbk")
         hs300_df = hs300_df.set_index("code")
 
         hs300_df = self.apply_strategy4stocks(hs300_df)
+        return hs300_df
 
-        filename = 'hs300_report_{}_{}'.format(
-            datetime.now().strftime('%Y%b%d'), int(time.time()))
-        self.save2file(filename, hs300_df)
-
-    def generate_zz500_report(self):
+    def apply_strategy4zz500(self):
         print('start generate zz500 report')
         zz500_df = pd.read_csv(os.path.join(
             os.getcwd(), 'raw_data/zz500_stocks.csv'), index_col=1, encoding="gbk")
         zz500_df = zz500_df.set_index("code")
 
         zz500_df = self.apply_strategy4stocks(zz500_df)
+        return zz500_df
 
-        filename = 'zz500_report_{}_{}'.format(
-            datetime.now().strftime('%Y%b%d'), int(time.time()))
-        self.save2file(filename, zz500_df)
+    def generate_report(self):
+        hs300_df = self.apply_strategy4hs300()
+        zz500_df = self.apply_strategy4zz500()
+
+        self.save2file(
+            'zz500_report_{}_{}'.format(
+                datetime.now().strftime('%Y%b%d'), int(time.time())),
+            zz500_df)
+
+        self.save2file(
+            'hs300_report_{}_{}'.format(
+                datetime.now().strftime('%Y%b%d'), int(time.time())),
+            hs300_df)
+        self.save2file(
+            'hs300zz500_report_{}_{}'.format(
+                datetime.now().strftime('%Y%b%d'), int(time.time())),
+            pd.concat([hs300_df, zz500_df]))
 
     def generate_holding_stock_report(self):
         print('start generate zz500 report')
@@ -83,6 +95,9 @@ class StockReporter:
                 df.loc[code, 'hk_ratio'] = c[0]/100
                 df.loc[code, 'hk-ma(hk,10)'] = c[1]/100
                 df.loc[code, 'hk-ma(hk,30)'] = c[2]/100
+
+            df.loc[code, 'pe_percent'], df.loc[code,
+                                               'pb_percent'] = pe_pb.count_pe_pb_band(stock_df)
         return df
 
     def save2file(self, filename, df: pd.DataFrame):
@@ -92,7 +107,8 @@ class StockReporter:
 
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
                  '(p-ma21)/p', '(p-ma13)/p', 'diff/p', 'std20', 'pe',
-                 'pb', 'hk_ratio', 'hk-ma(hk,10)', 'hk-ma(hk,30)', 'url']]
+                 'pb', 'pe_percent', 'pb_percent', 'hk_ratio', 'hk-ma(hk,10)',
+                 'hk-ma(hk,30)', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
@@ -115,7 +131,7 @@ class StockReporter:
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
             worksheet.set_column('F:J', None, format2)
-            worksheet.set_column('M:O', None, format2)
+            worksheet.set_column('M:Q', None, format2)
             # worksheet.set_row(0, None, row_format)
 
             # Freeze the first row.
@@ -211,8 +227,7 @@ class EtfIndexReporter:
 
 if __name__ == '__main__':
     sr = StockReporter()
-    sr.generate_hs300_report()
-    sr.generate_zz500_report()
+    sr.generate_report()
 
     eir = EtfIndexReporter()
     eir.generate_etf_index_report()

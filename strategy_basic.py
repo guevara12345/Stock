@@ -77,7 +77,22 @@ class StrategyHkHolding:
             return r
 
 
+class StrategyPePbBand:
+    def count_pe_pb_band(self, df):
+        year_df = df.sort_values(by='date', ascending=False)[0:52*5-1]
+        pe_max = year_df['pe'].max()
+        pe_min = year_df['pe'].min()
+        year_df['pe_percent'] = year_df['pe'].apply(
+            lambda x: (x-pe_min)/(pe_max-pe_min))
+        pb_max = year_df['pb'].max()
+        pb_min = year_df['pb'].min()
+        year_df['pb_percent'] = year_df['pb'].apply(
+            lambda x: (x-pb_min)/(pb_max-pb_min))
+        return year_df.iloc[0]['pe_percent'], year_df.iloc[0]['pb_percent']
+
+
 vol = StrategyVolatilityVol()
 double_ma = StrategyDoubleMa()
 new_high = StrategyNewHighest()
 hk = StrategyHkHolding()
+pe_pb = StrategyPePbBand()
