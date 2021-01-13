@@ -6,8 +6,8 @@ import time
 import xlsxwriter
 
 from downloader import bao_d, xueqiu_d
+from basic_stock_data import basic
 from code_formmat import code_formatter
-
 from strategy_basic import new_high, double_ma, vol, hk, pe_pb
 from get_config import config
 
@@ -37,37 +37,55 @@ class StockReporter:
         return zz500_df
 
     def generate_report(self):
-        hs300_df = self.apply_strategy4hs300()
-        zz500_df = self.apply_strategy4zz500()
+        # zz500_df = self.apply_strategy4zz500()
+        # self.save2file(
+        #     'zz500_report_{}_{}'.format(
+        #         datetime.now().strftime('%Y%b%d'), int(time.time())),
+        #     zz500_df)
+        # hs300_df = self.apply_strategy4hs300()
+        # self.save2file(
+        #     'hs300_report_{}_{}'.format(
+        #         datetime.now().strftime('%Y%b%d'), int(time.time())),
+        #     hs300_df)
+        # self.save2file(
+        #     'hs300zz500_report_{}_{}'.format(
+        #         datetime.now().strftime('%Y%b%d'), int(time.time())),
+        #     pd.concat([hs300_df, zz500_df]))
 
+        watching_df = self.apply_strategy4watching()
         self.save2file(
-            'zz500_report_{}_{}'.format(
+            'holding_report_{}_{}'.format(
                 datetime.now().strftime('%Y%b%d'), int(time.time())),
-            zz500_df)
+            watching_df)
 
-        self.save2file(
-            'hs300_report_{}_{}'.format(
-                datetime.now().strftime('%Y%b%d'), int(time.time())),
-            hs300_df)
-        self.save2file(
-            'hs300zz500_report_{}_{}'.format(
-                datetime.now().strftime('%Y%b%d'), int(time.time())),
-            pd.concat([hs300_df, zz500_df]))
+    def apply_strategy4watching(self):
+        print('start generate watching stocks report')
+        stocks_dict = {}
+        stocks_dict.update(config.watching_stocks)
+        stocks_dict.update(config.holding_stocks)
+        watching_df_dict = {}
+        for code in stocks_dict.keys():
+            capital_code = code_formatter.code2capita(code)
+            watching_df_dict[code] = xueqiu_d.download_dkline_from_xueqiu(
+                capital_code, 52*5)
 
-    def generate_holding_stock_report(self):
-        print('start generate zz500 report')
-        zz500_df = pd.read_csv(os.path.join(
-            os.getcwd(), 'raw_data/zz500_stocks.csv'), index_col=1, encoding="gbk")
-        hs300_df = pd.read_csv(os.path.join(
-            os.getcwd(), 'raw_data/hs300_stocks.csv'), index_col=1, encoding="gbk")
-        df = pd.concat([zz500_df, hs300_df])
-        df = df.set_index("code")
-        holding_df = df[df.index in config.holding_stocks.keys()]
-        holding_df = self.apply_strategy4stocks(holding_df)
+        watching_df = None
+        for code in watching_df_dict.keys():
+            if watching_df is None:
+                watching_df = pd.DataFrame(
+                    columns=watching_df_dict[code].columns)
+            today = watching_df_dict[code].set_index(
+                'date').sort_index(ascending=False).iloc[0]
+            today['code'] = code
+            today['code_name'] = config.watching_stocks[code]
+            today['url'] = 'http://quote.eastmoney.com/{}.html'.format(
+                code_formatter.code2nopoint(code))
+            today['industry'] = basic.get_industry(code)
+            watching_df = watching_df.append(today)
 
-        filename = 'holding_report_{}_{}'.format(
-            datetime.now().strftime('%Y%b%d'), int(time.time()))
-        self.save2file(filename, holding_df)
+        watching_df = watching_df.reset_index(drop=True).set_index('code')
+        watching_df = self.apply_strategy4stocks(watching_df)
+        return watching_df
 
     def apply_strategy4stocks(self, df):
         for code in df.index.values.tolist():

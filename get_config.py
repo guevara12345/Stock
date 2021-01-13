@@ -10,6 +10,7 @@ class Config:
             j_config = json.loads(f.read())
             self.__wangtching_etf_index = j_config['wangtching_etf_index']
             self.__holding_stocks = j_config['holding_stocks']
+            self.__watching_stocks = j_config['watching_stocks']
 
     @ property
     def wangtching_etf_index(self):
@@ -18,6 +19,10 @@ class Config:
     @ property
     def holding_stocks(self):
         return self.__holding_stocks
+
+    @ property
+    def watching_stocks(self):
+        return self.__watching_stocks
 
 
 config = Config()

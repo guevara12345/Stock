@@ -108,11 +108,13 @@ class BaiscStockData:
                 if i['gjc'] == '所属板块':
                     concept_list = re.split(r'\s+', i['ydnr'])
                     f = list(
-                            set([x for x in concept_list if x not in self.NO_INTEREST_CONCEPT]))
+                        set([x for x in concept_list if x not in self.NO_INTEREST_CONCEPT]))
                     return ','.join(f)
 
 
+basic = BaiscStockData()
+
 if __name__ == '__main__':
-    basic = BaiscStockData()
+
     basic.hs300_index_component()
     basic.zz500_index_component()
