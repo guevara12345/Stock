@@ -151,6 +151,7 @@ class StockReporter:
             # worksheet.set_column('E:E', None, format1)
             worksheet.set_column('F:J', None, format2)
             worksheet.set_column('M:Q', None, format2)
+
             # worksheet.set_row(0, None, row_format)
 
             # Freeze the first row.
