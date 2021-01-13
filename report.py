@@ -37,20 +37,20 @@ class StockReporter:
         return zz500_df
 
     def generate_report(self):
-        # zz500_df = self.apply_strategy4zz500()
-        # self.save2file(
-        #     'zz500_report_{}_{}'.format(
-        #         datetime.now().strftime('%Y%b%d'), int(time.time())),
-        #     zz500_df)
-        # hs300_df = self.apply_strategy4hs300()
-        # self.save2file(
-        #     'hs300_report_{}_{}'.format(
-        #         datetime.now().strftime('%Y%b%d'), int(time.time())),
-        #     hs300_df)
-        # self.save2file(
-        #     'hs300zz500_report_{}_{}'.format(
-        #         datetime.now().strftime('%Y%b%d'), int(time.time())),
-        #     pd.concat([hs300_df, zz500_df]))
+        zz500_df = self.apply_strategy4zz500()
+        self.save2file(
+            'zz500_report_{}_{}'.format(
+                datetime.now().strftime('%Y%b%d'), int(time.time())),
+            zz500_df)
+        hs300_df = self.apply_strategy4hs300()
+        self.save2file(
+            'hs300_report_{}_{}'.format(
+                datetime.now().strftime('%Y%b%d'), int(time.time())),
+            hs300_df)
+        self.save2file(
+            'hs300zz500_report_{}_{}'.format(
+                datetime.now().strftime('%Y%b%d'), int(time.time())),
+            pd.concat([hs300_df, zz500_df]))
 
         watching_df = self.apply_strategy4watching()
         self.save2file(
@@ -77,10 +77,11 @@ class StockReporter:
             today = watching_df_dict[code].set_index(
                 'date').sort_index(ascending=False).iloc[0]
             today['code'] = code
-            today['code_name'] = config.watching_stocks[code]
+            today['code_name'] = stocks_dict[code]
             today['url'] = 'http://quote.eastmoney.com/{}.html'.format(
                 code_formatter.code2nopoint(code))
-            today['industry'] = basic.get_industry(code)
+            today['industry'] = basic.get_industry(
+                code_formatter.code2nopoint(code))
             watching_df = watching_df.append(today)
 
         watching_df = watching_df.reset_index(drop=True).set_index('code')
