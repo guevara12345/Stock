@@ -99,6 +99,13 @@ class BaiscStockData:
                 industry = text_list[2]
                 return industry
 
+    def get_profit(self, code):
+        url = f'http://f10.eastmoney.com/NewFinanceAnalysis/MainTargetAjax?type=0&code={code}'
+        rsp = self.session.get(url)
+        if rsp.status_code == 200:
+            p_json = rsp.json()
+            return p_json[0]['date'], p_json[0]['kfjlrtbzz'], p_json[0]['kfjlrgdhbzz']
+
     def get_concept(self, code):
         url = f'http://f10.eastmoney.com/CoreConception/CoreConceptionAjax?code={code}'
         rsp = self.session.get(url)
@@ -116,5 +123,6 @@ basic = BaiscStockData()
 
 if __name__ == '__main__':
 
-    basic.hs300_index_component()
-    basic.zz500_index_component()
+    # basic.hs300_index_component()
+    # basic.zz500_index_component()
+    basic.get_profit('SH600690')
