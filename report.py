@@ -127,7 +127,7 @@ class StockReporter:
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
                  '(p-ma21)/p', '(p-ma13)/p', 'diff/p', 'std20', 'pe',
                  'pb', 'pe_percent', 'pb_percent', 'hk_ratio', 'hk-ma(hk,10)',
-                 'hk-ma(hk,30)', 'profit_date', 'profit_yoy', 'profit_qoq', 'url']]
+                 'hk-ma(hk,30)', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',

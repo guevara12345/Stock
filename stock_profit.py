@@ -98,23 +98,23 @@ class StockProfit:
             today['code'] = code
             today['code_name'] = df_stocks.loc[code, 'code_name']
             report_info = self.get_report(capital_code)
-            today['report_date'] = pd.to_datetime(report_info[0])
+            today['r_date'] = pd.to_datetime(report_info[0])
             if report_info[1] is not None:
-                today['revenue_yoy'] = float(report_info[1])/100
+                today['rev_yoy'] = float(report_info[1])/100
             if report_info[2] is not None:
-                today['revenue_qoq'] = float(report_info[2])/100
+                today['rev_qoq'] = float(report_info[2])/100
             if report_info[3] is not None:
-                today['profit_yoy'] = float(report_info[3])/100
+                today['pro_yoy'] = float(report_info[3])/100
             if report_info[4] is not None:
-                today['profit_qoq'] = float(report_info[4])/100
+                today['pro_qoq'] = float(report_info[4])/100
             predict_info = self.get_predict_profit(
                 code_without_char, datetime.fromisoformat(report_info[0]))
             if predict_info:
                 today['predict_date'] = pd.to_datetime(predict_info[0])
-                today['predict_r_date'] = pd.to_datetime(predict_info[1])
-                today['predict_type'] = predict_info[2]
+                today['pre_r_date'] = pd.to_datetime(predict_info[1])
+                today['pre_type'] = predict_info[2]
                 if predict_info[3] is not None:
-                    today['predict_pro_inc'] = predict_info[3]/100
+                    today['pre_pro+'] = predict_info[3]/100
             express_info = self.get_express_profit(
                 code_without_char, datetime.fromisoformat(report_info[0]))
             if express_info:
@@ -141,9 +141,9 @@ class StockProfit:
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
-        df = df[['code_name', 'industry', 'pe', 'pb', 'report_date',
-                 'revenue_yoy', 'revenue_qoq', 'profit_yoy', 'profit_qoq', 'predict_date',
-                 'predict_r_date', 'predict_type', 'predict_pro_inc', 'express_date',
+        df = df[['code_name', 'industry', 'pe', 'pb', 'r_date',
+                 'rev_yoy', 'rev_qoq', 'pro_yoy', 'pro_qoq', 'predict_date',
+                 'pre_r_date', 'pre_type', 'pre_pro+', 'express_date',
                  'express_r_date', 'express_rev_yoy',
                  'express_rev_qoq', 'express_pro_yoy', 'express_pro_qoq', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
