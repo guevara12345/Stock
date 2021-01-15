@@ -10,6 +10,9 @@ class Formatter:
         m = re.match(r'(\S{2})\.(\d{6})', code)
         return m.group(1)+m.group(2)
 
+    def code2code_without_char(self, code):
+        m = re.match(r'(\S{2})\.(\d{6})', code)
+        return m.group(2)
 
 code_formatter = Formatter()
 

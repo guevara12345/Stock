@@ -115,12 +115,8 @@ class StockReporter:
                 df.loc[code, 'hk-ma(hk,10)'] = c[1]/100
                 df.loc[code, 'hk-ma(hk,30)'] = c[2]/100
 
-            df.loc[code, 'pe_percent'], df.loc[code,
-                                               'pb_percent'] = pe_pb.count_pe_pb_band(stock_df)
-            profit_info = basic.get_profit(capital_code)
-            df.loc[code, 'profit_date'] = profit_info[0]
-            df.loc[code, 'profit_yoy'] = profit_info[1]
-            df.loc[code, 'profit_qoq'] = profit_info[2]
+            df.loc[code, 'pe_percent'], df.loc[
+                code, 'pb_percent'] = pe_pb.count_pe_pb_band(stock_df)
         return df
 
     def save2file(self, filename, df: pd.DataFrame):
@@ -131,7 +127,7 @@ class StockReporter:
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
                  '(p-ma21)/p', '(p-ma13)/p', 'diff/p', 'std20', 'pe',
                  'pb', 'pe_percent', 'pb_percent', 'hk_ratio', 'hk-ma(hk,10)',
-                 'hk-ma(hk,30)', 'profit_date','profit_yoy','profit_qoq','url']]
+                 'hk-ma(hk,30)', 'profit_date', 'profit_yoy', 'profit_qoq', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
