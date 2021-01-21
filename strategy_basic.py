@@ -30,9 +30,9 @@ class StrategyNewHighest:
 class StrategyDoubleMa:
     def double_ma_13_21(self, df):
         df['MA13'] = df['close'].ewm(
-            span=13, adjust=False).mean()
+            span=12, adjust=False).mean()
         df['MA21'] = df['close'].ewm(
-            span=21, adjust=False).mean()
+            span=26, adjust=False).mean()
         df['PRICE-MA21'] = df['close']-df['MA21']
         df['PRICE-MA13'] = df['close']-df['MA13']
         df['DIFF'] = df['MA13']-df['MA21']
