@@ -99,8 +99,8 @@ class StockReporter:
             a, b = double_ma.double_ma_13_21(stock_df)
             df.loc[code, 'price'] = a[0]
             df.loc[code, 'chg_rate'] = a[1]/100
-            df.loc[code, '(p-ma21)/p'] = b[0]
-            df.loc[code, '(p-ma13)/p'] = b[1]
+            df.loc[code, '(p-ma26)/p'] = b[0]
+            df.loc[code, '(p-ma12)/p'] = b[1]
             df.loc[code, 'diff/p'] = b[2]
 
             df.loc[code, 'pe'] = stock_df.sort_values(
@@ -125,7 +125,7 @@ class StockReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
-                 '(p-ma21)/p', '(p-ma13)/p', 'diff/p', 'std20', 'pe',
+                 '(p-ma26)/p', '(p-ma12)/p', 'diff/p', 'std20', 'pe',
                  'pb', 'pe_percent', 'pb_percent', 'hk_ratio', 'hk-ma(hk,10)',
                  'hk-ma(hk,30)', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
@@ -199,8 +199,8 @@ class EtfIndexReporter:
             a, b = double_ma.double_ma_13_21(single_etf_index_df_dict[code])
             etf_index_df.loc[code, 'price'] = a[0]
             etf_index_df.loc[code, 'chg_rate'] = a[1]/100
-            etf_index_df.loc[code, '(p-ma21)/p'] = b[0]
-            etf_index_df.loc[code, '(p-ma13)/p'] = b[1]
+            etf_index_df.loc[code, '(p-ma26)/p'] = b[0]
+            etf_index_df.loc[code, '(p-ma12)/p'] = b[1]
             etf_index_df.loc[code, 'diff/p'] = b[2]
 
             etf_index_df.loc[code, 'std20'] = vol.count_volatility(
@@ -213,7 +213,7 @@ class EtfIndexReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'highest_date', 'price', 'chg_rate',
-                 '(p-ma21)/p', '(p-ma13)/p', 'diff/p', 'std20', 'url']]
+                 '(p-ma26)/p', '(p-ma12)/p', 'diff/p', 'std20', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',

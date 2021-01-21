@@ -29,23 +29,23 @@ class StrategyNewHighest:
 
 class StrategyDoubleMa:
     def double_ma_13_21(self, df):
-        df['MA13'] = df['close'].ewm(
+        df['MA12'] = df['close'].ewm(
             span=12, adjust=False).mean()
-        df['MA21'] = df['close'].ewm(
+        df['MA26'] = df['close'].ewm(
             span=26, adjust=False).mean()
-        df['PRICE-MA21'] = df['close']-df['MA21']
-        df['PRICE-MA13'] = df['close']-df['MA13']
-        df['DIFF'] = df['MA13']-df['MA21']
+        df['PRICE-MA26'] = df['close']-df['MA26']
+        df['PRICE-MA12'] = df['close']-df['MA12']
+        df['DIFF'] = df['MA12']-df['MA26']
         df = df.sort_values(by='date', ascending=False)
         a = (
             df.iloc[0]['close'],
             df.iloc[0]['percent'],
-            df.iloc[0]['MA13'],
-            df.iloc[0]['MA21'],
+            df.iloc[0]['MA12'],
+            df.iloc[0]['MA26'],
         )
         b = (
-            df.iloc[0]['PRICE-MA21']/df.iloc[0]['close'],
-            df.iloc[0]['PRICE-MA13']/df.iloc[0]['close'],
+            df.iloc[0]['PRICE-MA26']/df.iloc[0]['close'],
+            df.iloc[0]['PRICE-MA12']/df.iloc[0]['close'],
             df.iloc[0]['DIFF']/df.iloc[0]['close']
         )
         return a, b
