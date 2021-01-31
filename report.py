@@ -114,9 +114,9 @@ class StockReporter:
                 df.loc[code, 'hk_ratio'] = c[0]/100
                 df.loc[code, 'hk-ma(hk,10)'] = c[1]/100
                 df.loc[code, 'hk-ma(hk,30)'] = c[2]/100
-
-            df.loc[code, 'pe_percent'], df.loc[
-                code, 'pb_percent'] = pe_pb.count_pe_pb_band(stock_df)
+            if df.loc[code, 'pe'] > 0:
+                df.loc[code, 'pe_percent'], df.loc[
+                    code, 'pb_percent'] = pe_pb.count_pe_pb_band(stock_df)
         return df
 
     def save2file(self, filename, df: pd.DataFrame):
