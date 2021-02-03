@@ -30,10 +30,25 @@ class StockProfit:
         if rsp.status_code == 200:
             p_json = rsp.json()[0]
             return [p_json['date'] if p_json['date'] != '--' else None,
-                    p_json['yyzsrtbzz'] if p_json['yyzsrtbzz'] != '--' else None,
-                    p_json['yyzsrgdhbzz'] if p_json['yyzsrgdhbzz'] != '--' else None,
+                    # 基本每股收益
+                    p_json['jbmgsy'] if p_json['jbmgsy'] != '--' else None,
+                    # 扣非每股收益
+                    p_json['kfmgsy'] if p_json['kfmgsy'] != '--' else None,
+                    # 扣非净利润yoy
                     p_json['kfjlrtbzz'] if p_json['kfjlrtbzz'] != '--' else None,
-                    p_json['kfjlrgdhbzz'] if p_json['kfjlrgdhbzz'] != '--' else None]
+                    # 营业总收入yoy
+                    p_json['yyzsrtbzz'] if p_json['yyzsrtbzz'] != '--' else None, ]
+
+    def get_broker_predict(self, code):
+        code2capita = code_formatter.code2capita(code)
+        url = f'http://f10.eastmoney.com/ProfitForecast/ProfitForecastAjax?code={code2capita}'
+        rsp = self.session.get(url)
+        if rsp.status_code == 200 and rsp.json() is not None:
+            stock_rating = sorted(rsp.json()['pjtj'], key=lambda i: i['sjd'])
+            if len(stock_rating) > 0:
+                latest_rating = stock_rating[0]
+            predict_list = sorted(rsp.json()['mgsy'], key=lambda i: i['year'])
+            return [latest_rating, predict_list[1], predict_list[2]]
 
     def get_predict_profit(self, code_without_char, last_report_date):
         url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_PUBLIC_OP_PREDICT'
@@ -66,14 +81,14 @@ class StockProfit:
         hs300_df = hs300_df.set_index("code")
         profit_hs300_df = self.get_stock_profit_data(hs300_df)
 
-        print('start generate zz500 profit report')
-        zz500_df = pd.read_csv(os.path.join(
-            os.getcwd(), 'raw_data/zz500_stocks.csv'), index_col=1, encoding="gbk")
-        zz500_df = zz500_df.set_index("code")
-        profit_zz500_df = self.get_stock_profit_data(zz500_df)
-        profit_df = pd.concat([profit_hs300_df, profit_zz500_df])
+        # print('start generate zz500 profit report')
+        # zz500_df = pd.read_csv(os.path.join(
+        #     os.getcwd(), 'raw_data/zz500_stocks.csv'), index_col=1, encoding="gbk")
+        # zz500_df = zz500_df.set_index("code")
+        # profit_zz500_df = self.get_stock_profit_data(zz500_df)
+        # profit_df = pd.concat([profit_hs300_df, profit_zz500_df])
 
-        # profit_df = profit_hs300_df
+        profit_df = profit_hs300_df
         self.save2file(
             'hs300zz500_financial_report_{}_{}'.format(
                 datetime.now().strftime('%Y%b%d'), int(time.time())),
@@ -97,16 +112,31 @@ class StockProfit:
                 'date').sort_index(ascending=False).iloc[0]
             today['code'] = code
             today['code_name'] = df_stocks.loc[code, 'code_name']
+
             report_info = self.get_report(capital_code)
             today['r_date'] = pd.to_datetime(report_info[0])
             if report_info[1] is not None:
-                today['rev_yoy'] = float(report_info[1])/100
+                today['eps'] = float(report_info[1])
             if report_info[2] is not None:
-                today['rev_qoq'] = float(report_info[2])/100
+                today['kf_eps'] = float(report_info[2])
             if report_info[3] is not None:
                 today['pro_yoy'] = float(report_info[3])/100
             if report_info[4] is not None:
-                today['pro_qoq'] = float(report_info[4])/100
+                today['rev_yoy'] = float(report_info[4])/100
+
+            broker_predict = self.get_broker_predict(code)
+            if broker_predict[1] is not None:
+                today['rating'] = float(report_info[1])
+            if broker_predict[1] is not None:
+                today['bp_year1'] = broker_predict[1]['year']
+                today['bp_eps1'] = float(broker_predict[1]['value'])
+                if broker_predict[1]['ratio'] is not '-':
+                    today['bp_ratio1'] = float(broker_predict[1]['ratio'])
+            # if broker_predict[2] is not None:
+            #     today['year2'] = broker_predict[2]['year']
+            #     today['eps2'] = float(broker_predict[2]['value'])
+            #     today['ratio2'] = float(broker_predict[2]['ratio'])
+
             predict_info = self.get_predict_profit(
                 code_without_char, datetime.fromisoformat(report_info[0]))
 
@@ -116,20 +146,19 @@ class StockProfit:
                 today['pre_type'] = predict_info[2]
                 if predict_info[3] is not None:
                     today['pre_pro+'] = predict_info[3]/100
-            express_info = self.get_express_profit(
-                code_without_char, datetime.fromisoformat(report_info[0]))
-            
-            if express_info:
-                today['express_date'] = pd.to_datetime(express_info[0])
-                today['express_r_date'] = pd.to_datetime(express_info[1])
-                if express_info[2] is not None:
-                    today['express_rev_yoy'] = express_info[2]/100
-                if express_info[3] is not None:
-                    today['express_rev_qoq'] = express_info[3]/100
-                if express_info[4] is not None:
-                    today['express_pro_yoy'] = express_info[4]/100
-                if express_info[5] is not None:
-                    today['express_pro_qoq'] = express_info[5]/100
+            # express_info = self.get_express_profit(
+            #     code_without_char, datetime.fromisoformat(report_info[0]))
+            # if express_info:
+            #     today['express_date'] = pd.to_datetime(express_info[0])
+            #     today['express_r_date'] = pd.to_datetime(express_info[1])
+            #     if express_info[2] is not None:
+            #         today['express_rev_yoy'] = express_info[2]/100
+            #     if express_info[3] is not None:
+            #         today['express_rev_qoq'] = express_info[3]/100
+            #     if express_info[4] is not None:
+            #         today['express_pro_yoy'] = express_info[4]/100
+            #     if express_info[5] is not None:
+            #         today['express_pro_qoq'] = express_info[5]/100
             today['industry'] = basic.get_industry(code_without_point)
             today['url'] = f'http://data.eastmoney.com/bbsj/yjkb/{code_without_char}.html'
             # today['predict_date'] = predict_info[0]
@@ -143,11 +172,10 @@ class StockProfit:
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
-        df = df[['code_name', 'industry', 'pe', 'pb', 'r_date',
-                 'rev_yoy', 'rev_qoq', 'pro_yoy', 'pro_qoq', 'predict_date',
-                 'pre_r_date', 'pre_type', 'pre_pro+', 'express_date',
-                 'express_r_date', 'express_rev_yoy',
-                 'express_rev_qoq', 'express_pro_yoy', 'express_pro_qoq', 'url']]
+        df = df[['code_name', 'industry', 'pe', 'pb',
+                 'r_date', 'eps', 'eps', 'pro_yoy', 'rev_yoy',
+                 'rating', 'bp_year1', 'bp_eps1', 'bp_ratio1',
+                 'predict_date', 'pre_r_date', 'pre_type', 'pre_pro+', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
@@ -169,9 +197,9 @@ class StockProfit:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('F:J', None, format2)
-            worksheet.set_column('N:N', None, format2)
-            worksheet.set_column('P:T', None, format2)
+            # worksheet.set_column('F:J', None, format2)
+            # worksheet.set_column('N:N', None, format2)
+            # worksheet.set_column('P:T', None, format2)
 
             # worksheet.set_row(0, None, row_format)
 
