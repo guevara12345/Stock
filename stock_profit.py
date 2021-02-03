@@ -109,6 +109,7 @@ class StockProfit:
                 today['pro_qoq'] = float(report_info[4])/100
             predict_info = self.get_predict_profit(
                 code_without_char, datetime.fromisoformat(report_info[0]))
+
             if predict_info:
                 today['predict_date'] = pd.to_datetime(predict_info[0])
                 today['pre_r_date'] = pd.to_datetime(predict_info[1])
@@ -117,6 +118,7 @@ class StockProfit:
                     today['pre_pro+'] = predict_info[3]/100
             express_info = self.get_express_profit(
                 code_without_char, datetime.fromisoformat(report_info[0]))
+            
             if express_info:
                 today['express_date'] = pd.to_datetime(express_info[0])
                 today['express_r_date'] = pd.to_datetime(express_info[1])
