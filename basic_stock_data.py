@@ -115,7 +115,6 @@ class BaiscStockData:
 basic = BaiscStockData()
 
 if __name__ == '__main__':
-
-    # basic.hs300_index_component()
-    # basic.zz500_index_component()
-    basic.get_profit('SH600690')
+    basic.hs300_index_component()
+    basic.zz500_index_component()
+    # basic.get_profit('SH600690')
