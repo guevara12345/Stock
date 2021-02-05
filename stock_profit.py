@@ -89,10 +89,8 @@ class StockProfit:
         profit_df = pd.concat([profit_hs300_df, profit_zz500_df])
 
         # profit_df = profit_hs300_df
-        self.save2file(
-            'hs300zz500_financial_report_{}_{}'.format(
-                datetime.now().strftime('%Y%b%d'), int(time.time())),
-            profit_df)
+        time_str = datetime.now().strftime('%H%M%S')
+        self.save2file(f'hs300zz500_financial_{time_str}', profit_df)
 
     def get_stock_profit_data(self, df_stocks):
         stock_profit_df = None
