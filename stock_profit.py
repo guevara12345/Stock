@@ -129,6 +129,7 @@ class StockProfit:
                 today['rating'] = float(broker_predict[0])
             if broker_predict[1] is not None:
                 today['eps'] = float(broker_predict[1]['value'])
+                today['roe'] = today['pe']/today['eps']/100
             if broker_predict[2] is not None:
                 today['bp_year1'] = broker_predict[2]['year']
                 today['bp_eps1'] = float(broker_predict[2]['value'])
@@ -180,7 +181,7 @@ class StockProfit:
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
-        df = df[['code_name', 'industry', 'pe', 'pb', 'eps', 'close',
+        df = df[['code_name', 'industry', 'pe', 'pb', 'eps', 'roe','close',
                  'r_date', 'r_eps', 'r_kf_eps', 'r_pro_yoy', 'r_rev_yoy',
                  'rating', 'bp_year1', 'bp_eps1', 'bp_ratio1', 'bp_year2', 'bp_eps2', 'bp_ratio2',
                  'predict_date', 'pre_r_date', 'pre_type', 'pre_pro+', 'url']]
