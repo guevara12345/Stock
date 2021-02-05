@@ -151,7 +151,7 @@ class StockProfit:
                 if broker_predict[3]['ratio'] != '-':
                     today['bp_ratio2'] = float(broker_predict[3]['ratio'])/100
             if broker_predict[4] is not None and broker_predict[4] >= 0:
-                if today['pe'] is not None:
+                if today['pe'] is not None and today['pe'] > 0:
                     today['peg'] = today['pe']/broker_predict[4]
             # if broker_predict[2] is not None:
             #     today['year2'] = broker_predict[2]['year']
@@ -197,7 +197,7 @@ class StockProfit:
 
         df = df[['code_name', 'industry', 'pe', 'pb', 'eps', 'roe', 'peg', 'close',
                  'r_date', 'r_eps', 'r_kf_eps', 'r_pro_yoy', 'r_rev_yoy',
-                 'rating', 'bp_year1', 'bp_eps1', 'bp_ratio1', 'bp_eps2', 'bp_ratio2',
+                 'rating', 'bp_year1', 'bp_eps1', 'bp_eps2', 'bp_ratio1',  'bp_ratio2',
                  'predict_date', 'pre_r_date', 'pre_type', 'pre_pro+', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
@@ -225,9 +225,8 @@ class StockProfit:
             worksheet.set_column('G:G', None, format2)
             worksheet.set_column('H:H', None, format1)
             worksheet.set_column('M:N', None, format2)
-            worksheet.set_column('R:R', None, format2)
-            worksheet.set_column('U:U', None, format2)
-            worksheet.set_column('Y:Y', None, format2)
+            worksheet.set_column('S:T', None, format2)
+            worksheet.set_column('X:X', None, format2)
 
             # worksheet.set_row(0, None, row_format)
 
