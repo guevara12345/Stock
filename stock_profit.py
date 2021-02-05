@@ -48,7 +48,16 @@ class StockProfit:
             if len(stock_rating) > 0:
                 latest_rating = stock_rating[0]['pjxs']
             predict_list = sorted(rsp.json()['mgsy'], key=lambda i: i['year'])
-            return [latest_rating, predict_list[0], predict_list[1], predict_list[2]]
+            eps_list = [x['mgsy'].split('(')[0]
+                        for x in rsp.json()['yctj']['data']]
+            pro_grow_ratio = None
+            if eps_list[0] != '--' and eps_list[4] != '--':
+                five_year_growth = (
+                    float(eps_list[4])-float(eps_list[0]))/abs(float(eps_list[0]))
+                if five_year_growth >= 0:
+                    pro_grow_ratio = ((1+five_year_growth)**0.2-1)*100
+            return [latest_rating, predict_list[0], predict_list[1],
+                    predict_list[2], pro_grow_ratio]
 
     def get_predict_profit(self, code_without_char, last_report_date):
         url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_PUBLIC_OP_PREDICT'
@@ -91,6 +100,8 @@ class StockProfit:
         # profit_df = profit_hs300_df
         time_str = datetime.now().strftime('%H%M%S')
         self.save2file(f'hs300zz500_financial_{time_str}', profit_df)
+        self.save2file(f'hs300_financial_{time_str}', profit_hs300_df)
+        self.save2file(f'zz500_financial_{time_str}', profit_zz500_df)
 
     def get_stock_profit_data(self, df_stocks):
         stock_profit_df = None
@@ -127,7 +138,8 @@ class StockProfit:
                 today['rating'] = float(broker_predict[0])
             if broker_predict[1] is not None:
                 today['eps'] = float(broker_predict[1]['value'])
-                today['roe'] = today['pe']/today['eps']/100
+                if today['pb'] is not None and today['pe'] is not None:
+                    today['roe'] = today['pb']/today['pe']
             if broker_predict[2] is not None:
                 today['bp_year1'] = broker_predict[2]['year']
                 today['bp_eps1'] = float(broker_predict[2]['value'])
@@ -138,6 +150,9 @@ class StockProfit:
                 today['bp_eps2'] = float(broker_predict[3]['value'])
                 if broker_predict[3]['ratio'] != '-':
                     today['bp_ratio2'] = float(broker_predict[3]['ratio'])/100
+            if broker_predict[4] is not None and broker_predict[4] >= 0:
+                if today['pe'] is not None:
+                    today['peg'] = today['pe']/broker_predict[4]
             # if broker_predict[2] is not None:
             #     today['year2'] = broker_predict[2]['year']
             #     today['eps2'] = float(broker_predict[2]['value'])
@@ -152,19 +167,20 @@ class StockProfit:
                 today['pre_type'] = predict_info[2]
                 if predict_info[3] is not None:
                     today['pre_pro+'] = predict_info[3]/100
-            # express_info = self.get_express_profit(
-            #     code_without_char, datetime.fromisoformat(report_info[0]))
-            # if express_info:
-            #     today['express_date'] = pd.to_datetime(express_info[0])
-            #     today['express_r_date'] = pd.to_datetime(express_info[1])
-            #     if express_info[2] is not None:
-            #         today['express_rev_yoy'] = express_info[2]/100
-            #     if express_info[3] is not None:
-            #         today['express_rev_qoq'] = express_info[3]/100
-            #     if express_info[4] is not None:
-            #         today['express_pro_yoy'] = express_info[4]/100
-            #     if express_info[5] is not None:
-            #         today['express_pro_qoq'] = express_info[5]/100
+
+            express_info = self.get_express_profit(
+                code_without_char, datetime.fromisoformat(report_info[0]))
+            if express_info:
+                today['predict_date'] = pd.to_datetime(express_info[0])
+                today['pre_r_date'] = pd.to_datetime(express_info[1])
+                # if express_info[2] is not None:
+                #     today['express_rev_yoy'] = express_info[2]/100
+                # if express_info[3] is not None:
+                #     today['express_rev_qoq'] = express_info[3]/100
+                if express_info[4] is not None:
+                    today['pre_pro+'] = express_info[4]/100
+                # if express_info[5] is not None:
+                #     today['express_pro_qoq'] = express_info[5]/100
             today['industry'] = basic.get_industry(code_without_point)
             today[
                 'url'] = f'http://emweb.securities.eastmoney.com/NewFinanceAnalysis/Index?type=web&code={capital_code}'
@@ -179,9 +195,9 @@ class StockProfit:
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
-        df = df[['code_name', 'industry', 'pe', 'pb', 'eps', 'roe','close',
+        df = df[['code_name', 'industry', 'pe', 'pb', 'eps', 'roe', 'peg', 'close',
                  'r_date', 'r_eps', 'r_kf_eps', 'r_pro_yoy', 'r_rev_yoy',
-                 'rating', 'bp_year1', 'bp_eps1', 'bp_ratio1', 'bp_year2', 'bp_eps2', 'bp_ratio2',
+                 'rating', 'bp_year1', 'bp_eps1', 'bp_ratio1', 'bp_eps2', 'bp_ratio2',
                  'predict_date', 'pre_r_date', 'pre_type', 'pre_pro+', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
@@ -196,6 +212,7 @@ class StockProfit:
 
             # Add some cell formats.
             # format1 = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+            format1 = workbook.add_format({'num_format': '0.00'})
             format2 = workbook.add_format({'num_format': '0.00%'})
             # row_format = workbook.add_format({'bg_color': 'green'})
 
@@ -204,10 +221,13 @@ class StockProfit:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('K:L', None, format2)
-            worksheet.set_column('P:P', None, format2)
-            worksheet.set_column('S:S', None, format2)
-            worksheet.set_column('W:W', None, format2)
+            worksheet.set_column('D:F', None, format1)
+            worksheet.set_column('G:G', None, format2)
+            worksheet.set_column('H:H', None, format1)
+            worksheet.set_column('M:N', None, format2)
+            worksheet.set_column('R:R', None, format2)
+            worksheet.set_column('U:U', None, format2)
+            worksheet.set_column('Y:Y', None, format2)
 
             # worksheet.set_row(0, None, row_format)
 
