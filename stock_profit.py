@@ -7,82 +7,12 @@ import requests
 from lxml import etree
 import re
 
-from downloader import bao_d, xueqiu_d
+from downloader import bao_d, xueqiu_d, dongcai_d
 from code_formmat import code_formatter
 from basic_stock_data import basic
 
 
 class StockProfit:
-    def __init__(self):
-        # get session of dongcai
-        self.session = requests.Session()
-        self.session.headers.update(
-            {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'})
-        self.session.get('https://www.eastmoney.com/')
-        self.session.get('http://data.eastmoney.com/center/')
-        self.NO_INTEREST_CONCEPT = [
-            'HS300_', 'MSCI中国', '标普概念', '富时概念', '中证500',
-            '融资融券', '上证180_', '上证50_', '上证380']
-
-    def get_report(self, code):
-        url = f'http://f10.eastmoney.com/NewFinanceAnalysis/MainTargetAjax?type=0&code={code}'
-        rsp = self.session.get(url)
-        if rsp.status_code == 200:
-            p_json = rsp.json()[0]
-            return [p_json['date'] if p_json['date'] != '--' else None,
-                    # 基本每股收益
-                    p_json['jbmgsy'] if p_json['jbmgsy'] != '--' else None,
-                    # 扣非每股收益
-                    p_json['kfmgsy'] if p_json['kfmgsy'] != '--' else None,
-                    # 扣非净利润yoy
-                    p_json['kfjlrtbzz'] if p_json['kfjlrtbzz'] != '--' else None,
-                    # 营业总收入yoy
-                    p_json['yyzsrtbzz'] if p_json['yyzsrtbzz'] != '--' else None, ]
-
-    def get_broker_predict(self, code):
-        code2capita = code_formatter.code2capita(code)
-        url = f'http://f10.eastmoney.com/ProfitForecast/ProfitForecastAjax?code={code2capita}'
-        rsp = self.session.get(url)
-        if rsp.status_code == 200 and rsp.json() is not None:
-            stock_rating = rsp.json()['pjtj']
-            if len(stock_rating) > 0:
-                latest_rating = stock_rating[0]['pjxs']
-            predict_list = sorted(rsp.json()['mgsy'], key=lambda i: i['year'])
-            eps_list = [x['mgsy'].split('(')[0]
-                        for x in rsp.json()['yctj']['data']]
-            pro_grow_ratio = None
-            if eps_list[0] != '--' and eps_list[4] != '--':
-                five_year_growth = (
-                    float(eps_list[4])-float(eps_list[0]))/abs(float(eps_list[0]))
-                if five_year_growth >= 0:
-                    pro_grow_ratio = ((1+five_year_growth)**0.2-1)*100
-            return [latest_rating, predict_list[0], predict_list[1],
-                    predict_list[2], pro_grow_ratio]
-
-    def get_predict_profit(self, code_without_char, last_report_date):
-        url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_PUBLIC_OP_PREDICT'
-        rsp = self.session.get(url)
-        if rsp.status_code == 200 and rsp.json()['result'] is not None:
-            predict = rsp.json()['result']['data'][0]
-            if(datetime.fromisoformat(predict['REPORTDATE']) > last_report_date):
-                return [predict['NOTICE_DATE'],
-                        predict['REPORTDATE'],
-                        predict['FORECASTTYPE'],
-                        predict['INCREASEL']]
-
-    def get_express_profit(self, code_without_char, last_report_date):
-        url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORT_DATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_FCI_PERFORMANCEE'
-        rsp = self.session.get(url)
-        if rsp.status_code == 200 and rsp.json()['result'] is not None:
-            express = rsp.json()['result']['data'][0]
-            if(datetime.fromisoformat(express['REPORT_DATE']) > last_report_date):
-                return [express['UPDATE_DATE'],
-                        express['REPORT_DATE'],
-                        express['YSTZ'],
-                        express['DJDYSHZ'],
-                        express['JLRTBZCL'],
-                        express['DJDJLHZ']]
-
     def generate_report(self):
         print('start generate hs300 profit report')
         hs300_df = pd.read_csv(os.path.join(
@@ -122,7 +52,7 @@ class StockProfit:
             today['code'] = code
             today['code_name'] = df_stocks.loc[code, 'code_name']
 
-            report_info = self.get_report(capital_code)
+            report_info = dongcai_d.get_report(capital_code)
             today['r_date'] = pd.to_datetime(report_info[0])
             if report_info[1] is not None:
                 today['r_eps'] = float(report_info[1])
@@ -133,7 +63,7 @@ class StockProfit:
             if report_info[4] is not None:
                 today['r_rev_yoy'] = float(report_info[4])/100
 
-            broker_predict = self.get_broker_predict(code)
+            broker_predict = dongcai_d.get_broker_predict(code)
             if broker_predict[0] is not None:
                 today['rating'] = float(broker_predict[0])
             if broker_predict[1] is not None:
@@ -158,7 +88,7 @@ class StockProfit:
             #     today['eps2'] = float(broker_predict[2]['value'])
             #     today['ratio2'] = float(broker_predict[2]['ratio'])
 
-            predict_info = self.get_predict_profit(
+            predict_info = dongcai_d.get_predict_profit(
                 code_without_char, datetime.fromisoformat(report_info[0]))
 
             if predict_info:
@@ -168,7 +98,7 @@ class StockProfit:
                 if predict_info[3] is not None:
                     today['pre_pro+'] = predict_info[3]/100
 
-            express_info = self.get_express_profit(
+            express_info = dongcai_d.get_express_profit(
                 code_without_char, datetime.fromisoformat(report_info[0]))
             if express_info:
                 today['predict_date'] = pd.to_datetime(express_info[0])

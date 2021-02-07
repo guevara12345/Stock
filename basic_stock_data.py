@@ -38,7 +38,7 @@ class BaiscStockData:
         result = pd.DataFrame(hs300_stocks, columns=rs.fields)
 
         result = result.set_index("code")
-        result = self.get_stock_detail_from_dongcai(result)
+        result = self.get_stock_industry_from_dongcai(result)
         # 结果集输出到csv文件
         result.to_csv(
             os.path.join(os.getcwd(), f'raw_data/hs300_stocks.csv'),
@@ -57,7 +57,7 @@ class BaiscStockData:
         result = pd.DataFrame(zz500_stocks, columns=rs.fields)
 
         result = result.set_index("code")
-        result = self.get_stock_detail_from_dongcai(result)
+        result = self.get_stock_industry_from_dongcai(result)
 
         # 结果集输出到csv文件
         result.to_csv(
@@ -79,9 +79,9 @@ class BaiscStockData:
             print(f'get stock info of {code}')
         return df
 
-    def get_stock_detail_from_dongcai(self, df):
+    def get_stock_industry_from_dongcai(self, df):
         for code in df.index.values.tolist():
-            print(f'get stock detail of {code}')
+            print(f'get stock industry of {code}')
             code_without_point = code_formatter.code2nopoint(code)
             df.loc[code, 'industry'] = self.get_industry(code_without_point)
             df.loc[code, 'concept'] = self.get_concept(code_without_point)
