@@ -39,15 +39,15 @@ class StockReporter:
     def generate_report(self):
         zz500_df = self.apply_strategy4zz500()
         time_str = datetime.now().strftime('%H%M%S')
-        self.save2file(f'zz500_report_{time_str}', zz500_df)
+        self.save2file(f'daily_zz500_{time_str}', zz500_df)
         hs300_df = self.apply_strategy4hs300()
-        self.save2file(f'hs300_report_{time_str}', hs300_df)
+        self.save2file(f'daily_hs300_{time_str}', hs300_df)
         self.save2file(
-            f'hs300zz500_report_{time_str}',
+            f'daily_hs300zz500_{time_str}',
             pd.concat([hs300_df, zz500_df]))
 
         watching_df = self.apply_strategy4watching()
-        self.save2file(f'holding_report_{time_str}', watching_df)
+        self.save2file(f'daily_holding_{time_str}', watching_df)
 
     def apply_strategy4watching(self):
         print('start generate watching stocks report')
@@ -175,7 +175,7 @@ class EtfIndexReporter:
             etf_index_df, single_etf_index_df_dict)
 
         time_str = datetime.now().strftime('%H%M%S')
-        self.save2file(f'etf_index_report_{time_str}', etf_index_df)
+        self.save2file(f'daily_etf_index_{time_str}', etf_index_df)
 
     def apply_strategy(self, etf_index_df, single_etf_index_df_dict):
         for code in single_etf_index_df_dict.keys():

@@ -29,9 +29,9 @@ class StockProfit:
 
         # profit_df = profit_hs300_df
         time_str = datetime.now().strftime('%H%M%S')
-        self.save2file(f'hs300zz500_financial_{time_str}', profit_df)
-        self.save2file(f'hs300_financial_{time_str}', profit_hs300_df)
-        self.save2file(f'zz500_financial_{time_str}', profit_zz500_df)
+        self.save2file(f'financial_hs300zz500_{time_str}', profit_df)
+        self.save2file(f'financial_hs300_{time_str}', profit_hs300_df)
+        self.save2file(f'financial_zz500_{time_str}', profit_zz500_df)
 
     def get_stock_profit_data(self, df_stocks):
         stock_profit_df = None
@@ -172,7 +172,7 @@ class StockProfit:
             worksheet.set_column('H:H', None, format1)
             worksheet.set_column('L:N', None, format2)
             worksheet.set_column('R:S', None, format2)
-            worksheet.set_column('T:Y', None, format2)
+            worksheet.set_column('X:Y', None, format2)
             worksheet.set_column('AC:AC', None, format2)
 
             # worksheet.set_row(0, None, row_format)
