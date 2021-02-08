@@ -83,14 +83,15 @@ class BaiscStockData:
         for code in df.index.values.tolist():
             print(f'get stock industry of {code}')
             code_without_point = code_formatter.code2nopoint(code)
-            df.loc[code, 'industry'] = self.get_industry(code_without_point)
-            df.loc[code, 'concept'] = self.get_concept(code_without_point)
+            df.loc[code, 'industry'] = self.get_industry(code)
+            df.loc[code, 'concept'] = self.get_concept(code)
             df.loc[code,
                    'url'] = f'http://quote.eastmoney.com/{code_without_point}.html'
         return df
 
     def get_industry(self, code):
-        url = f'http://quote.eastmoney.com/{code}.html'
+        code_without_point = code_formatter.code2nopoint(code)
+        url = f'http://quote.eastmoney.com/{code_without_point}.html'
         rsp = self.session.get(url)
         if rsp.status_code == 200:
             selector = etree.HTML(rsp.text.encode('utf-8'))
@@ -100,7 +101,8 @@ class BaiscStockData:
                 return industry
 
     def get_concept(self, code):
-        url = f'http://f10.eastmoney.com/CoreConception/CoreConceptionAjax?code={code}'
+        code_without_point = code_formatter.code2nopoint(code)
+        url = f'http://f10.eastmoney.com/CoreConception/CoreConceptionAjax?code={code_without_point}'
         rsp = self.session.get(url)
         if rsp.status_code == 200:
             concept_list = rsp.json()['hxtc']

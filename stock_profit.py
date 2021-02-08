@@ -38,12 +38,9 @@ class StockProfit:
         for code in df_stocks.index.tolist():
             print(f'get profit info of {code}')
             capital_code = code_formatter.code2capita(code)
-            code_without_char = code_formatter.code2code_without_char(
-                code)
-            code_without_point = code_formatter.code2nopoint(code)
 
             single_stock_price_data = xueqiu_d.download_dkline_from_xueqiu(
-                capital_code, 5)
+                code, 5)
             if stock_profit_df is None:
                 stock_profit_df = pd.DataFrame(
                     columns=single_stock_price_data.columns)
@@ -52,66 +49,72 @@ class StockProfit:
             today['code'] = code
             today['code_name'] = df_stocks.loc[code, 'code_name']
 
-            report_info = dongcai_d.get_report(capital_code)
-            today['r_date'] = pd.to_datetime(report_info[0])
+            report_info = dongcai_d.get_report(code)
+            today['r_date'] = pd.to_datetime(report_info['date'])
             if report_info[1] is not None:
-                today['r_eps'] = float(report_info[1])
+                today['r_eps'] = float(report_info['eps'])
             if report_info[2] is not None:
-                today['r_kf_eps'] = float(report_info[2])
+                today['r_kf_eps'] = float(report_info['kf_eps'])
             if report_info[3] is not None:
-                today['r_pro_yoy'] = float(report_info[3])/100
+                today['r_pro_yoy'] = float(report_info['profit_yoy'])/100
             if report_info[4] is not None:
-                today['r_rev_yoy'] = float(report_info[4])/100
+                today['r_rev_yoy'] = float(report_info['revenue_yoy'])/100
 
             broker_predict = dongcai_d.get_broker_predict(code)
             if broker_predict[0] is not None:
-                today['rating'] = float(broker_predict[0])
+                today['rating'] = float(broker_predict['rate'])
             if broker_predict[1] is not None:
-                today['eps'] = float(broker_predict[1]['value'])
+                today['eps'] = float(broker_predict['lastyear']['value'])
                 if today['pb'] is not None and today['pe'] is not None:
                     today['roe'] = today['pb']/today['pe']
             if broker_predict[2] is not None:
-                today['bp_year1'] = broker_predict[2]['year']
-                today['bp_eps1'] = float(broker_predict[2]['value'])
-                if broker_predict[2]['ratio'] != '-':
-                    today['bp_ratio1'] = float(broker_predict[2]['ratio'])/100
-            if broker_predict[3] is not None:
-                today['bp_year2'] = broker_predict[3]['year']
-                today['bp_eps2'] = float(broker_predict[3]['value'])
-                if broker_predict[3]['ratio'] != '-':
-                    today['bp_ratio2'] = float(broker_predict[3]['ratio'])/100
-            if broker_predict[4] is not None and broker_predict[4] >= 0:
+                today['bp_year1'] = broker_predict['thisyear']['year']
+                today['bp_eps1'] = float(broker_predict['thisyear']['value'])
+                if broker_predict['thisyear']['ratio'] != '-':
+                    today['bp_ratio1'] = float(
+                        broker_predict['thisyear']['ratio'])/100
+            if broker_predict['nextyear'] is not None:
+                today['bp_year2'] = broker_predict['nextyear']['year']
+                today['bp_eps2'] = float(broker_predict['nextyear']['value'])
+                if broker_predict['nextyear']['ratio'] != '-':
+                    today['bp_ratio2'] = float(
+                        broker_predict['nextyear']['ratio'])/100
+            if broker_predict['pro_grow_ratio'] is not None and broker_predict['pro_grow_ratio'] >= 0:
                 if today['pe'] is not None and today['pe'] > 0:
-                    today['peg'] = today['pe']/broker_predict[4]
+                    today['peg'] = today['pe']/broker_predict['pro_grow_ratio']
             # if broker_predict[2] is not None:
             #     today['year2'] = broker_predict[2]['year']
             #     today['eps2'] = float(broker_predict[2]['value'])
             #     today['ratio2'] = float(broker_predict[2]['ratio'])
 
             predict_info = dongcai_d.get_predict_profit(
-                code_without_char, datetime.fromisoformat(report_info[0]))
+                code, datetime.fromisoformat(report_info['date']))
 
             if predict_info:
-                today['predict_date'] = pd.to_datetime(predict_info[0])
-                today['pre_r_date'] = pd.to_datetime(predict_info[1])
-                today['pre_type'] = predict_info[2]
-                if predict_info[3] is not None:
-                    today['pre_pro+'] = predict_info[3]/100
+                today['predict_date'] = pd.to_datetime(
+                    predict_info['release_date'])
+                today['pre_r_date'] = pd.to_datetime(
+                    predict_info['report_date'])
+                today['pre_type'] = predict_info['predict_type']
+                if predict_info['increase'] is not None:
+                    today['pre_pro+'] = predict_info['increase']/100
 
             express_info = dongcai_d.get_express_profit(
-                code_without_char, datetime.fromisoformat(report_info[0]))
+                code, datetime.fromisoformat(report_info['date']))
             if express_info:
-                today['predict_date'] = pd.to_datetime(express_info[0])
-                today['pre_r_date'] = pd.to_datetime(express_info[1])
+                today['predict_date'] = pd.to_datetime(
+                    express_info['release_date'])
+                today['pre_r_date'] = pd.to_datetime(
+                    express_info['report_date'])
                 # if express_info[2] is not None:
                 #     today['express_rev_yoy'] = express_info[2]/100
                 # if express_info[3] is not None:
                 #     today['express_rev_qoq'] = express_info[3]/100
-                if express_info[4] is not None:
-                    today['pre_pro+'] = express_info[4]/100
+                if express_info['profit_yoy'] is not None:
+                    today['pre_pro+'] = express_info['profit_yoy']/100
                 # if express_info[5] is not None:
                 #     today['express_pro_qoq'] = express_info[5]/100
-            today['industry'] = basic.get_industry(code_without_point)
+            today['industry'] = basic.get_industry(code)
             today[
                 'url'] = f'http://emweb.securities.eastmoney.com/NewFinanceAnalysis/Index?type=web&code={capital_code}'
             # today['predict_date'] = predict_info[0]

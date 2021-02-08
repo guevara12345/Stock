@@ -56,9 +56,8 @@ class StockReporter:
         stocks_dict.update(config.holding_stocks)
         watching_df_dict = {}
         for code in stocks_dict.keys():
-            capital_code = code_formatter.code2capita(code)
             watching_df_dict[code] = xueqiu_d.download_dkline_from_xueqiu(
-                capital_code, 52*5)
+                code, 52*5)
 
         watching_df = None
         for code in watching_df_dict.keys():
@@ -71,8 +70,7 @@ class StockReporter:
             today['code_name'] = stocks_dict[code]
             today['url'] = 'http://quote.eastmoney.com/{}.html'.format(
                 code_formatter.code2nopoint(code))
-            today['industry'] = basic.get_industry(
-                code_formatter.code2nopoint(code))
+            today['industry'] = basic.get_industry(code)
             watching_df = watching_df.append(today)
 
         watching_df = watching_df.reset_index(drop=True).set_index('code')
@@ -81,8 +79,7 @@ class StockReporter:
 
     def apply_strategy4stocks(self, df):
         for code in df.index.values.tolist():
-            capital_code = code_formatter.code2capita(code)
-            stock_df = xueqiu_d.download_dkline_from_xueqiu(capital_code, 52*5)
+            stock_df = xueqiu_d.download_dkline_from_xueqiu(code, 52*5)
 
             df.loc[code, 'highest_date'] = new_high.new_highest_date_with_xiuquedata(
                 stock_df)
@@ -157,9 +154,8 @@ class EtfIndexReporter:
         print('start generate etf_index report')
         single_etf_index_df_dict = dict()
         for code in config.wangtching_etf_index.keys():
-            capital_code = code_formatter.code2capita(code)
             single_etf_index_df_dict[code] = xueqiu_d.download_dkline_from_xueqiu(
-                capital_code, 52*5)
+                code, 52*5)
 
         etf_index_df = None
         for code in single_etf_index_df_dict.keys():

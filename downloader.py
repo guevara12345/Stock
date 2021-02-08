@@ -60,10 +60,11 @@ class XueqiuDownloader:
             {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'})
         self.session.get('https://xueqiu.com/')
 
-    def download_dkline_from_xueqiu(self, capital_code, day_num):
+    def download_dkline_from_xueqiu(self, code, day_num):
         XUEQIU_D_KLINE_URL_FORMAT = '''
             https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol={}&begin={}&period=day&type=before&count={}&indicator=kline,pe,pb,ps,pcf,market_capital,agt,ggt,balance
             '''
+        capital_code = code_formatter.code2capita(code)
         timestamp = int(((datetime.now()+timedelta(days=1)).timestamp())*1000)
         url = XUEQIU_D_KLINE_URL_FORMAT.format(
             capital_code, timestamp, -day_num)
@@ -118,7 +119,7 @@ class DongcaiDownloader:
                 'eps': p_json['jbmgsy'] if p_json['jbmgsy'] != '--' else None,
                 'kf_eps': p_json['kfmgsy'] if p_json['kfmgsy'] != '--' else None,
                 'profit_yoy': p_json['kfjlrtbzz'] if p_json['kfjlrtbzz'] != '--' else None,
-                'revenue': p_json['yyzsrtbzz'] if p_json['yyzsrtbzz'] != '--' else None,
+                'revenue_yoy': p_json['yyzsrtbzz'] if p_json['yyzsrtbzz'] != '--' else None,
             }
 
     # 券商研报预测
@@ -139,34 +140,42 @@ class DongcaiDownloader:
                     float(eps_list[4])-float(eps_list[0]))/abs(float(eps_list[0]))
                 if five_year_growth >= 0:
                     pro_grow_ratio = ((1+five_year_growth)**0.2-1)*100
-            return [latest_rating, predict_list[0], predict_list[1],
-                    predict_list[2], pro_grow_ratio]
+            return {
+                'rate': latest_rating,
+                'lastyear': predict_list[0],
+                'thisyear': predict_list[1],
+                'nextyear': predict_list[2],
+                'pro_grow_ratio': pro_grow_ratio}
 
     # 业绩预测
-    def get_predict_profit(self, code_without_char, last_report_date):
+    def get_predict_profit(self, code, last_report_date):
+        code_without_char = code_formatter.code2code_without_char(code)
         url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_PUBLIC_OP_PREDICT'
         rsp = self.session.get(url)
         if rsp.status_code == 200 and rsp.json()['result'] is not None:
             predict = rsp.json()['result']['data'][0]
             if(datetime.fromisoformat(predict['REPORTDATE']) > last_report_date):
-                return [predict['NOTICE_DATE'],
-                        predict['REPORTDATE'],
-                        predict['FORECASTTYPE'],
-                        predict['INCREASEL']]
+                return {
+                    'release_date': predict['NOTICE_DATE'],
+                    'report_date': predict['REPORTDATE'],
+                    'predict_type': predict['FORECASTTYPE'],
+                    'increase': predict['INCREASEL']}
 
     # 业绩快报
-    def get_express_profit(self, code_without_char, last_report_date):
+    def get_express_profit(self, code, last_report_date):
+        code_without_char = code_formatter.code2code_without_char(code)
         url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORT_DATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_FCI_PERFORMANCEE'
         rsp = self.session.get(url)
         if rsp.status_code == 200 and rsp.json()['result'] is not None:
             express = rsp.json()['result']['data'][0]
             if(datetime.fromisoformat(express['REPORT_DATE']) > last_report_date):
-                return [express['UPDATE_DATE'],
-                        express['REPORT_DATE'],
-                        express['YSTZ'],
-                        express['DJDYSHZ'],
-                        express['JLRTBZCL'],
-                        express['DJDJLHZ']]
+                return {
+                    'release_date': express['UPDATE_DATE'],
+                    'report_date': express['REPORT_DATE'],
+                    'revenue': express['YSTZ'],
+                    'revenue_qoq': express['DJDYSHZ'],
+                    'profit_yoy': express['JLRTBZCL'],
+                    'profit_qoq': express['DJDJLHZ']}
 
 
 bao_d = BaoDownloader()
@@ -176,4 +185,4 @@ dongcai_d = DongcaiDownloader()
 if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
     # bao_d.get_from_xls('000300')
-    xueqiu_d.download_dkline_from_xueqiu('SH600438', 52*5)
+    xueqiu_d.download_dkline_from_xueqiu('sh.600438', 52*5)
