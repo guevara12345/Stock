@@ -126,7 +126,8 @@ class StockProfit:
             fund_holding_info = dongcai_d.get_fund_holding(code)
             if fund_holding_info['last_quarter'] != 0:
                 today['f_hold'] = fund_holding_info['last_quarter']
-            today['f_hold_last'] = fund_holding_info['last_2quarter']
+            if fund_holding_info['last_2quarter'] != 0:
+                today['f_hold_last'] = fund_holding_info['last_2quarter']
             if fund_holding_info['last_quarter'] != 0 and fund_holding_info['last_2quarter'] != 0:
                 today['f_hold_chg'] = fund_holding_info['last_quarter'] - \
                     fund_holding_info['last_2quarter']

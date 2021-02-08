@@ -225,4 +225,5 @@ dongcai_d = DongcaiDownloader()
 if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
     # bao_d.get_from_xls('000300')
-    xueqiu_d.download_dkline_from_xueqiu('sh.600438', 52*5)
+    # xueqiu_d.download_dkline_from_xueqiu('sh.600438', 52*5)
+    dongcai_d.get_fund_holding('sh.600928')
