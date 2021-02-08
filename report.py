@@ -84,12 +84,13 @@ class StockReporter:
             df.loc[code, 'highest_date'] = new_high.new_highest_date_with_xiuquedata(
                 stock_df)
 
-            a, b = double_ma.double_ma_13_21(stock_df)
-            df.loc[code, 'price'] = a[0]
-            df.loc[code, 'chg_rate'] = a[1]/100
-            df.loc[code, '(p-ma26)/p'] = b[0]
-            df.loc[code, '(p-ma12)/p'] = b[1]
-            df.loc[code, 'diff/p'] = b[2]
+            ema_info = double_ma.double_ma_13_21(stock_df)
+            df.loc[code, 'price'] = ema_info['close']
+            df.loc[code, 'chg_rate'] = ema_info['chg_percent']/100
+            df.loc[code, '(p-ma26)/p'] = ema_info['(p-ema26)/p']
+            df.loc[code, 'dif/p'] = ema_info['dif/p']
+            df.loc[code, 'dea/p'] = ema_info['dea/p']
+            df.loc[code, '(dif-dea)/p'] = ema_info['(dif-dea)/p']
 
             df.loc[code, 'pe'] = stock_df.sort_values(
                 by='date', ascending=False).iloc[0]['pe']
@@ -113,9 +114,9 @@ class StockReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
-                 '(p-ma26)/p', '(p-ma12)/p', 'diff/p', 'std20', 'pe',
+                 '(p-ma26)/p', 'dif/p', 'dea/p', '(dif-dea)/p', 'std20', 'pe',
                  'pb', 'pe_percent', 'pb_percent', 'hk_ratio', 'hk-ma(hk,10)',
-                 'hk-ma(hk,30)', 'url']]
+                 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
@@ -137,8 +138,8 @@ class StockReporter:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('F:J', None, format2)
-            worksheet.set_column('M:Q', None, format2)
+            worksheet.set_column('F:K', None, format2)
+            worksheet.set_column('N:Q', None, format2)
 
             # worksheet.set_row(0, None, row_format)
 
@@ -182,12 +183,14 @@ class EtfIndexReporter:
             etf_index_df.loc[code, 'highest_date'] = new_high.new_highest_date_with_xiuquedata(
                 single_etf_index_df_dict[code])
 
-            a, b = double_ma.double_ma_13_21(single_etf_index_df_dict[code])
-            etf_index_df.loc[code, 'price'] = a[0]
-            etf_index_df.loc[code, 'chg_rate'] = a[1]/100
-            etf_index_df.loc[code, '(p-ma26)/p'] = b[0]
-            etf_index_df.loc[code, '(p-ma12)/p'] = b[1]
-            etf_index_df.loc[code, 'diff/p'] = b[2]
+            ema_info = double_ma.double_ma_13_21(
+                single_etf_index_df_dict[code])
+            etf_index_df.loc[code, 'price'] = ema_info['close']
+            etf_index_df.loc[code, 'chg_rate'] = ema_info['chg_percent']/100
+            etf_index_df.loc[code, '(p-ma26)/p'] = ema_info['(p-ema26)/p']
+            etf_index_df.loc[code, 'dif/p'] = ema_info['dif/p']
+            etf_index_df.loc[code, 'dea/p'] = ema_info['dea/p']
+            etf_index_df.loc[code, '(dif-dea)/p'] = ema_info['(dif-dea)/p']
 
             etf_index_df.loc[code, 'std20'] = vol.count_volatility(
                 single_etf_index_df_dict[code])
@@ -199,7 +202,7 @@ class EtfIndexReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'highest_date', 'price', 'chg_rate',
-                 '(p-ma26)/p', '(p-ma12)/p', 'diff/p', 'std20', 'url']]
+                 '(p-ma26)/p', 'dif/p', 'dea/p', '(dif-dea)/p', 'std20', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',

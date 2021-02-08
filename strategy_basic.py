@@ -35,20 +35,23 @@ class StrategyDoubleMa:
             span=26, adjust=False).mean()
         df['PRICE-MA26'] = df['close']-df['MA26']
         df['PRICE-MA12'] = df['close']-df['MA12']
-        df['DIFF'] = df['MA12']-df['MA26']
+        df['DIF'] = df['MA12']-df['MA26']
+        df['DEA'] = df['DIF'].ewm(
+            span=9, adjust=False).mean()
         df = df.sort_values(by='date', ascending=False)
-        a = (
-            df.iloc[0]['close'],
-            df.iloc[0]['percent'],
-            df.iloc[0]['MA12'],
-            df.iloc[0]['MA26'],
-        )
         b = (
             df.iloc[0]['PRICE-MA26']/df.iloc[0]['close'],
             df.iloc[0]['PRICE-MA12']/df.iloc[0]['close'],
-            df.iloc[0]['DIFF']/df.iloc[0]['close']
+            df.iloc[0]['DIF']/df.iloc[0]['close']
         )
-        return a, b
+        return {
+            'close': df.iloc[0]['close'],
+            'chg_percent': df.iloc[0]['percent'],
+            '(p-ema26)/p': df.iloc[0]['PRICE-MA26']/df.iloc[0]['close'],
+            'dif/p': df.iloc[0]['DIF']/df.iloc[0]['close'],
+            'dea/p': df.iloc[0]['DEA']/df.iloc[0]['close'],
+            '(dif-dea)/p': (df.iloc[0]['DIF']-df.iloc[0]['DEA'])/df.iloc[0]['close'],
+        }
 
 
 class StrategyVolatilityVol:
