@@ -51,23 +51,23 @@ class StockProfit:
 
             report_info = dongcai_d.get_report(code)
             today['r_date'] = pd.to_datetime(report_info['date'])
-            if report_info[1] is not None:
+            if report_info['eps'] is not None:
                 today['r_eps'] = float(report_info['eps'])
-            if report_info[2] is not None:
+            if report_info['kf_eps'] is not None:
                 today['r_kf_eps'] = float(report_info['kf_eps'])
-            if report_info[3] is not None:
+            if report_info['profit_yoy'] is not None:
                 today['r_pro_yoy'] = float(report_info['profit_yoy'])/100
-            if report_info[4] is not None:
+            if report_info['revenue_yoy'] is not None:
                 today['r_rev_yoy'] = float(report_info['revenue_yoy'])/100
 
             broker_predict = dongcai_d.get_broker_predict(code)
-            if broker_predict[0] is not None:
+            if broker_predict['rate'] is not None:
                 today['rating'] = float(broker_predict['rate'])
-            if broker_predict[1] is not None:
+            if broker_predict['lastyear'] is not None:
                 today['eps'] = float(broker_predict['lastyear']['value'])
                 if today['pb'] is not None and today['pe'] is not None:
                     today['roe'] = today['pb']/today['pe']
-            if broker_predict[2] is not None:
+            if broker_predict['thisyear'] is not None:
                 today['bp_year1'] = broker_predict['thisyear']['year']
                 today['bp_eps1'] = float(broker_predict['thisyear']['value'])
                 if broker_predict['thisyear']['ratio'] != '-':
@@ -118,6 +118,18 @@ class StockProfit:
             today[
                 'url'] = f'http://emweb.securities.eastmoney.com/NewFinanceAnalysis/Index?type=web&code={capital_code}'
             # today['predict_date'] = predict_info[0]
+            market_capital_info = xueqiu_d.download_stock_detail_from_xueqiu(
+                code)
+            today['m_cap'] = market_capital_info['market_value']//100000000
+            today['f_cap'] = market_capital_info['float_market_capital']//100000000
+
+            fund_holding_info = dongcai_d.get_fund_holding(code)
+            if fund_holding_info['last_quarter'] != 0:
+                today['f_hold'] = fund_holding_info['last_quarter']
+            today['f_hold_last'] = fund_holding_info['last_2quarter']
+            if fund_holding_info['last_quarter'] != 0 and fund_holding_info['last_2quarter'] != 0:
+                today['f_hold_chg'] = fund_holding_info['last_quarter'] - \
+                    fund_holding_info['last_2quarter']
             stock_profit_df = stock_profit_df.append(today)
         stock_profit_df = stock_profit_df.reset_index(
             drop=True).set_index('code')
@@ -129,6 +141,7 @@ class StockProfit:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'industry', 'pe', 'pb', 'eps', 'roe', 'peg', 'close',
+                 'm_cap', 'f_cap', 'f_hold', 'f_hold_last', 'f_hold_chg',
                  'r_date', 'r_eps', 'r_kf_eps', 'r_pro_yoy', 'r_rev_yoy',
                  'rating', 'bp_year1', 'bp_eps1', 'bp_eps2', 'bp_ratio1',  'bp_ratio2',
                  'predict_date', 'pre_r_date', 'pre_type', 'pre_pro+', 'url']]
@@ -157,9 +170,10 @@ class StockProfit:
             worksheet.set_column('D:F', None, format1)
             worksheet.set_column('G:G', None, format2)
             worksheet.set_column('H:H', None, format1)
-            worksheet.set_column('M:N', None, format2)
-            worksheet.set_column('S:T', None, format2)
-            worksheet.set_column('X:X', None, format2)
+            worksheet.set_column('L:N', None, format2)
+            worksheet.set_column('R:S', None, format2)
+            worksheet.set_column('T:Y', None, format2)
+            worksheet.set_column('AC:AC', None, format2)
 
             # worksheet.set_row(0, None, row_format)
 

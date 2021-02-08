@@ -82,9 +82,7 @@ class XueqiuDownloader:
 
     def download_stock_detail_from_xueqiu(self, code):
         capital_code = code_formatter.code2capita(code)
-        URL_FORMAT = '''
-            https://stock.xueqiu.com/v5/stock/quote.json?symbol={}&extend=detail
-            '''
+        URL_FORMAT = 'https://stock.xueqiu.com/v5/stock/quote.json?symbol={}&extend=detail'
         url = URL_FORMAT.format(capital_code)
         rsp = self.session.get(url)
         if rsp.status_code == 200:
@@ -110,7 +108,8 @@ class DongcaiDownloader:
 
     # 最近财务报表
     def get_report(self, code):
-        url = f'http://f10.eastmoney.com/NewFinanceAnalysis/MainTargetAjax?type=0&code={code}'
+        capital_code = code_formatter.code2capita(code)
+        url = f'http://f10.eastmoney.com/NewFinanceAnalysis/MainTargetAjax?type=0&code={capital_code}'
         rsp = self.session.get(url)
         if rsp.status_code == 200:
             p_json = rsp.json()[0]
@@ -135,11 +134,11 @@ class DongcaiDownloader:
             eps_list = [x['mgsy'].split('(')[0]
                         for x in rsp.json()['yctj']['data']]
             pro_grow_ratio = None
-            if eps_list[0] != '--' and eps_list[4] != '--':
-                five_year_growth = (
-                    float(eps_list[4])-float(eps_list[0]))/abs(float(eps_list[0]))
-                if five_year_growth >= 0:
-                    pro_grow_ratio = ((1+five_year_growth)**0.2-1)*100
+            if eps_list[2] != '--' and eps_list[4] != '--':
+                two_year_growth = (
+                    float(eps_list[4])-float(eps_list[2]))/abs(float(eps_list[2]))
+                if two_year_growth >= 0:
+                    pro_grow_ratio = ((1+two_year_growth)**0.5-1)*100
             return {
                 'rate': latest_rating,
                 'lastyear': predict_list[0],
@@ -176,6 +175,47 @@ class DongcaiDownloader:
                     'revenue_qoq': express['DJDYSHZ'],
                     'profit_yoy': express['JLRTBZCL'],
                     'profit_qoq': express['DJDJLHZ']}
+
+    def get_fund_holding(self, code):
+        code2capita = code_formatter.code2capita(code)
+        today = datetime.now()
+        quarter = (today.month-1)//3
+        if quarter == 1:
+            last_quarter = datetime(today.year, 3, 31).strftime('%Y-%m-%d')
+            last_2quarter = datetime(today.year-1, 12, 31).strftime('%Y-%m-%d')
+        elif quarter == 2:
+            last_quarter = datetime(today.year, 6, 30).strftime('%Y-%m-%d')
+            last_2quarter = datetime(today.year, 3, 31).strftime('%Y-%m-%d')
+        elif quarter == 3:
+            last_quarter = datetime(today.year, 9, 30).strftime('%Y-%m-%d')
+            last_2quarter = datetime(today.year, 6, 30).strftime('%Y-%m-%d')
+        else:
+            last_quarter = datetime(today.year-1, 12, 31).strftime('%Y-%m-%d')
+            last_2quarter = datetime(today.year-1, 9, 30).strftime('%Y-%m-%d')
+
+        URL_FORMAT = 'http://f10.eastmoney.com/ShareholderResearch/MainPositionsHodlerAjax?date={}&code={}'
+        last_quarter_fund_holding = 0
+        last_2quarter_fund_holding = 0
+        rsp1 = self.session.get(URL_FORMAT.format(last_quarter, code2capita))
+        # ['基金', '保险', '券商', 'QFII', '社保基金', '信托', '其他机构', '合计']
+        fund_type = ['基金', ]
+        if rsp1.status_code == 200:
+            data1 = rsp1.json()
+            for i in data1:
+                if i['jglx'] in fund_type and i['zltgbl'] != '--':
+                    last_quarter_fund_holding = last_quarter_fund_holding+float(
+                        i['zltgbl'].split('%')[0])
+        rsp2 = self.session.get(URL_FORMAT.format(last_2quarter, code2capita))
+        if rsp2.status_code == 200:
+            data2 = rsp2.json()
+            for i in data2:
+                if i['jglx'] in fund_type and i['zltgbl'] != '--':
+                    last_2quarter_fund_holding = last_2quarter_fund_holding+float(
+                        i['zltgbl'].split('%')[0])
+        return {
+            'last_quarter': last_quarter_fund_holding/100,
+            'last_2quarter': last_2quarter_fund_holding/100,
+        }
 
 
 bao_d = BaoDownloader()
