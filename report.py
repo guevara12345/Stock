@@ -144,9 +144,9 @@ class StockReporter:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('F:J', None, format2)
-            worksheet.set_column('L:M', None, format2)
-            worksheet.set_column('P:S', None, format2)
+            worksheet.set_column('F:I', None, format2)
+            worksheet.set_column('K:L', None, format2)
+            worksheet.set_column('O:R', None, format2)
             # worksheet.set_row(0, None, row_format)
 
             # Freeze the first row.
@@ -234,8 +234,8 @@ class EtfIndexReporter:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('E:I', None, format2)
-            worksheet.set_column('K:L', None, format2)
+            worksheet.set_column('E:H', None, format2)
+            worksheet.set_column('J:K', None, format2)
             # worksheet.set_row(0, None, row_format)
 
             # Freeze the first row.
