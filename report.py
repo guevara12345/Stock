@@ -114,7 +114,7 @@ class StockReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
-                 '(p-ma26)/p', 'dif/p', 'dea/p', '(dif-dea)/p', 'std20', 'pe',
+                 '(p-ma26)/p', 'dif/p', '(dif-dea)/p', 'std20', 'pe',
                  'pb', 'pe_percent', 'pb_percent', 'hk_ratio', 'hk-ma(hk,10)',
                  'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
@@ -202,7 +202,7 @@ class EtfIndexReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'highest_date', 'price', 'chg_rate',
-                 '(p-ma26)/p', 'dif/p', 'dea/p', '(dif-dea)/p', 'std20', 'url']]
+                 '(p-ma26)/p', 'dif/p', '(dif-dea)/p', 'std20', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
