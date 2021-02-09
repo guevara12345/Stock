@@ -106,6 +106,11 @@ class StockReporter:
             if df.loc[code, 'pe'] > 0:
                 df.loc[code, 'pe_percent'], df.loc[
                     code, 'pb_percent'] = pe_pb.count_pe_pb_band(stock_df)
+
+            vol_info = vol.count_quantity_ratio(stock_df)
+            df.loc[code, 'turnover'] = vol_info['turnover']
+            df.loc[code, 'm(ma5-ma20)/m'] = vol_info['m(ma5-ma20)/m']
+
         return df
 
     def save2file(self, filename, df: pd.DataFrame):
@@ -114,9 +119,10 @@ class StockReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
-                 '(p-ma26)/p', 'dif/p', '(dif-dea)/p', 'std20', 'pe',
-                 'pb', 'pe_percent', 'pb_percent', 'hk_ratio', 'hk-ma(hk,10)',
-                 'url']]
+                 '(p-ma26)/p', 'dif/p', 'dea/p', '(dif-dea)/p',
+                 'turnover', 'm(ma5-ma20)/m', 'std20',
+                 'pe', 'pb', 'pe_percent', 'pb_percent',
+                 'hk_ratio', 'hk-ma(hk,10)', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
@@ -138,9 +144,9 @@ class StockReporter:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('F:K', None, format2)
-            worksheet.set_column('N:Q', None, format2)
-
+            worksheet.set_column('F:J', None, format2)
+            worksheet.set_column('L:M', None, format2)
+            worksheet.set_column('P:S', None, format2)
             # worksheet.set_row(0, None, row_format)
 
             # Freeze the first row.
@@ -194,6 +200,9 @@ class EtfIndexReporter:
 
             etf_index_df.loc[code, 'std20'] = vol.count_volatility(
                 single_etf_index_df_dict[code])
+            vol_info = vol.count_quantity_ratio(single_etf_index_df_dict[code])
+            etf_index_df.loc[code, 'turnover'] = vol_info['turnover']
+            etf_index_df.loc[code, 'm(ma5-ma20)/m'] = vol_info['m(ma5-ma20)/m']
         return etf_index_df
 
     def save2file(self, filename, df: pd.DataFrame):
@@ -202,7 +211,8 @@ class EtfIndexReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'highest_date', 'price', 'chg_rate',
-                 '(p-ma26)/p', 'dif/p', '(dif-dea)/p', 'std20', 'url']]
+                 '(p-ma26)/p', 'dif/p', 'dea/p', '(dif-dea)/p',
+                 'turnover', 'm(ma5-ma20)/m', 'std20', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
@@ -224,7 +234,8 @@ class EtfIndexReporter:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('E:J', None, format2)
+            worksheet.set_column('E:I', None, format2)
+            worksheet.set_column('K:L', None, format2)
             # worksheet.set_row(0, None, row_format)
 
             # Freeze the first row.

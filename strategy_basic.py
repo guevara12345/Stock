@@ -63,11 +63,13 @@ class StrategyVolatilityVol:
         return a/100
 
     def count_quantity_ratio(self, df):
-        df['max_qr5'] = df['percent'].ewm(
-            span=20, adjust=False).std()
+        df['mount(ma5-ma20)'] = df['amount'].rolling(window=5).mean() - \
+            df['amount'].rolling(window=20).mean()
         df = df.sort_values(by='date', ascending=False)
-        a = df.iloc[0]['STD20']
-        return a/100
+        return {
+            'turnover': df.iloc[0]['turnoverrate'],
+            'm(ma5-ma20)/m': df.iloc[0]['mount(ma5-ma20)']/df.iloc[0]['amount'],
+        }
 
 
 class StrategyHkHolding:
