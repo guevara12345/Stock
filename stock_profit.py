@@ -127,9 +127,9 @@ class StockProfit:
             if fund_holding_info['last_quarter'] != 0:
                 today['f_hold'] = fund_holding_info['last_quarter']
             if fund_holding_info['last_2quarter'] != 0:
-                today['f_hold_last'] = fund_holding_info['last_2quarter']
+                today['f_last'] = fund_holding_info['last_2quarter']
             if fund_holding_info['last_quarter'] != 0 and fund_holding_info['last_2quarter'] != 0:
-                today['f_hold_chg'] = fund_holding_info['last_quarter'] - \
+                today['f_chg'] = fund_holding_info['last_quarter'] - \
                     fund_holding_info['last_2quarter']
             stock_profit_df = stock_profit_df.append(today)
         stock_profit_df = stock_profit_df.reset_index(
@@ -142,7 +142,7 @@ class StockProfit:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'industry', 'pe', 'pb', 'eps', 'roe', 'peg', 'close',
-                 'm_cap', 'f_cap', 'f_hold', 'f_hold_last', 'f_hold_chg',
+                 'm_cap', 'f_cap', 'f_hold', 'f_last', 'f_chg',
                  'r_date', 'r_eps', 'r_kf_eps', 'r_pro_yoy', 'r_rev_yoy',
                  'rating', 'bp_year1', 'bp_eps1', 'bp_eps2', 'bp_ratio1',  'bp_ratio2',
                  'predict_date', 'pre_r_date', 'pre_type', 'pre_pro+', 'url']]
