@@ -14,16 +14,16 @@ class StrategyNewHighest:
     def new_highest_date_with_baodata(self, code: str):
         dataFrame = bao_d.download_dayline_from_bao(code)
         half_year_df = dataFrame.sort_values(
-            by='date', ascending=False)[0:26*5-1]
+            by='datetime', ascending=False)[0:26*5-1]
         highest_date = half_year_df.sort_values(
-            by='close', ascending=False).iloc[0]['date']
+            by='close', ascending=False).iloc[0]['datetime']
         return highest_date
 
     def new_highest_date_with_xiuquedata(self, dataFrame: pd.DataFrame):
         half_year_df = dataFrame.sort_values(
-            by='date', ascending=False)[0:26*5-1]
+            by='datetime', ascending=False)[0:26*5-1]
         highest_date = half_year_df.sort_values(
-            by='close', ascending=False).iloc[0]['date']
+            by='close', ascending=False).iloc[0]['datetime']
         return highest_date
 
 
@@ -38,7 +38,7 @@ class StrategyDoubleMa:
         df['DIF'] = df['MA12']-df['MA26']
         df['DEA'] = df['DIF'].ewm(
             span=9, adjust=False).mean()
-        df = df.sort_values(by='date', ascending=False)
+        df = df.sort_values(by='datetime', ascending=False)
         b = (
             df.iloc[0]['PRICE-MA26']/df.iloc[0]['close'],
             df.iloc[0]['PRICE-MA12']/df.iloc[0]['close'],
@@ -58,14 +58,14 @@ class StrategyVolatilityVol:
     def count_volatility(self, df):
         df['STD20'] = df['percent'].ewm(
             span=20, adjust=False).std()
-        df = df.sort_values(by='date', ascending=False)
+        df = df.sort_values(by='datetime', ascending=False)
         a = df.iloc[0]['STD20']
         return a/100
 
     def count_quantity_ratio(self, df):
         df['mount(ma5-ma20)'] = df['amount'].rolling(window=5).mean() - \
             df['amount'].rolling(window=20).mean()
-        df = df.sort_values(by='date', ascending=False)
+        df = df.sort_values(by='datetime', ascending=False)
         return {
             'turnover': df.iloc[0]['turnoverrate'],
             'm(ma5-ma20)/m': df.iloc[0]['mount(ma5-ma20)']/df.iloc[0]['amount'],
@@ -78,7 +78,7 @@ class StrategyHkHolding:
             span=5, adjust=False).mean()
         df['hold_ratio_ma30'] = df['hold_ratio_cn'].ewm(
             span=15, adjust=False).mean()
-        df = df.sort_values(by='date', ascending=False)
+        df = df.sort_values(by='datetime', ascending=False)
         if df.iloc[1]['hold_ratio_cn'] is not None:
             r = (df.iloc[1]['hold_ratio_cn'],
                  df.iloc[1]['hold_ratio_cn']-df.iloc[1]['hold_ratio_ma10'],
@@ -88,7 +88,7 @@ class StrategyHkHolding:
 
 class StrategyPePbBand:
     def count_pe_pb_band(self, df):
-        year_df = df.sort_values(by='date', ascending=False)[0:52*5-1]
+        year_df = df.sort_values(by='datetime', ascending=False)[0:52*5-1]
         pe_max = year_df['pe'].max()
         pe_min = year_df['pe'].min()
         year_df['pe_percent'] = year_df['pe'].apply(

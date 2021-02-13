@@ -75,8 +75,16 @@ class XueqiuDownloader:
             dkline_json = rsp.json()
             result = pd.DataFrame(
                 dkline_json['data']['item'], columns=dkline_json['data']['column'])
+            return result
+
+    def download_dkline_from_xueqiu4backtest(self, code, day_num):
+        result = self.download_dkline_from_xueqiu(code, day_num)
+
+    def download_dkline_from_xueqiu4daily(self, code, day_num):
+        result = self.download_dkline_from_xueqiu(code, day_num)
+        if result is not None:
             # 时区硬转utc+8，excel不支持时区信息
-            result['date'] = pd.to_datetime(
+            result['datetime'] = pd.to_datetime(
                 result['timestamp']+(8*3600)*1000, unit='ms')
             return result
 
