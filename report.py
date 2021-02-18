@@ -56,7 +56,7 @@ class StockReporter:
         stocks_dict.update(config.holding_stocks)
         watching_df_dict = {}
         for code in stocks_dict.keys():
-            watching_df_dict[code] = xueqiu_d.download_dkline_from_xueqiu(
+            watching_df_dict[code] = xueqiu_d.download_dkline_from_xueqiu4daily(
                 code, 52*5)
 
         watching_df = None
@@ -65,7 +65,7 @@ class StockReporter:
                 watching_df = pd.DataFrame(
                     columns=watching_df_dict[code].columns)
             today = watching_df_dict[code].set_index(
-                'date').sort_index(ascending=False).iloc[0]
+                'datetime').sort_index(ascending=False).iloc[0]
             today['code'] = code
             today['code_name'] = stocks_dict[code]
             today['url'] = 'http://quote.eastmoney.com/{}.html'.format(
@@ -79,7 +79,7 @@ class StockReporter:
 
     def apply_strategy4stocks(self, df):
         for code in df.index.values.tolist():
-            stock_df = xueqiu_d.download_dkline_from_xueqiu(code, 52*5)
+            stock_df = xueqiu_d.download_dkline_from_xueqiu4daily(code, 52*5)
 
             df.loc[code, 'highest_date'] = new_high.new_highest_date_with_xiuquedata(
                 stock_df)
@@ -93,9 +93,9 @@ class StockReporter:
             df.loc[code, '(dif-dea)/p'] = ema_info['(dif-dea)/p']
 
             df.loc[code, 'pe'] = stock_df.sort_values(
-                by='date', ascending=False).iloc[0]['pe']
+                by='datetime', ascending=False).iloc[0]['pe']
             df.loc[code, 'pb'] = stock_df.sort_values(
-                by='date', ascending=False).iloc[0]['pb']
+                by='datetime', ascending=False).iloc[0]['pb']
 
             df.loc[code, 'std20'] = vol.count_volatility(stock_df)
             c = hk.count_hk_holding_rate(stock_df)
@@ -161,7 +161,7 @@ class EtfIndexReporter:
         print('start generate etf_index report')
         single_etf_index_df_dict = dict()
         for code in config.wangtching_etf_index.keys():
-            single_etf_index_df_dict[code] = xueqiu_d.download_dkline_from_xueqiu(
+            single_etf_index_df_dict[code] = xueqiu_d.download_dkline_from_xueqiu4daily(
                 code, 52*5)
 
         etf_index_df = None
@@ -170,7 +170,7 @@ class EtfIndexReporter:
                 etf_index_df = pd.DataFrame(
                     columns=single_etf_index_df_dict[code].columns)
             today = single_etf_index_df_dict[code].set_index(
-                'date').sort_index(ascending=False).iloc[0]
+                'datetime').sort_index(ascending=False).iloc[0]
             today['code'] = code
             today['code_name'] = config.wangtching_etf_index[code]
             code_without_point = code_formatter.code2nopoint(code)

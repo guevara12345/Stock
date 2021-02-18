@@ -9,6 +9,9 @@ import sys  # To find out the script name (in argv[0])
 import backtrader as bt
 
 
+from downloader import xueqiu_d
+
+
 # Create a Stratey
 class TestStrategy(bt.Strategy):
     params = (
@@ -120,18 +123,18 @@ if __name__ == '__main__':
 
     # Datas are in a subfolder of the samples. Need to find where the script is
     # because it could have been called from anywhere
-    modpath = os.path.dirname(os.path.abspath(sys.argv[0]))
-    datapath = os.path.join(modpath, '../../datas/orcl-1995-2014.txt')
+    dataframe = xueqiu_d.download_dkline_from_xueqiu('sz.000568', 52*2*10)
 
     # Create a Data Feed
-    data = bt.feeds.YahooFinanceCSVData(
-        dataname=datapath,
+    data = bt.feeds.PandasData(
+        dataname=dataframe,
         # Do not pass values before this date
-        fromdate=datetime.datetime(2000, 1, 1),
+        fromdate=datetime.datetime(2010, 1, 1),
         # Do not pass values before this date
-        todate=datetime.datetime(2000, 12, 31),
+        todate=datetime.datetime(2020, 12, 31),
         # Do not pass values after this date
-        reverse=False)
+        # reverse=False
+        )
 
     # Add the Data Feed to Cerebro
     cerebro.adddata(data)

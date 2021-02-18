@@ -39,13 +39,13 @@ class StockProfit:
             print(f'get profit info of {code}')
             capital_code = code_formatter.code2capita(code)
 
-            single_stock_price_data = xueqiu_d.download_dkline_from_xueqiu(
+            single_stock_price_data = xueqiu_d.download_dkline_from_xueqiu4daily(
                 code, 5)
             if stock_profit_df is None:
                 stock_profit_df = pd.DataFrame(
                     columns=single_stock_price_data.columns)
             today = single_stock_price_data.set_index(
-                'date').sort_index(ascending=False).iloc[0]
+                'datetime').sort_index(ascending=False).iloc[0]
             today['code'] = code
             today['code_name'] = df_stocks.loc[code, 'code_name']
 
