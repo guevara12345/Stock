@@ -15,7 +15,7 @@ from downloader import xueqiu_d
 # Create a Stratey
 class TestStrategy(bt.Strategy):
     params = (
-        ('maperiod', 15),
+        ('maperiod', 34),
     )
 
     def log(self, txt, dt=None):
@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     # Datas are in a subfolder of the samples. Need to find where the script is
     # because it could have been called from anywhere
-    dataframe = xueqiu_d.download_dkline_from_xueqiu('sz.000568', 52*2*10)
+    dataframe = xueqiu_d.download_dkline_from_xueqiu4backtest('sz.000568', 52*5*10)
 
     # Create a Data Feed
     data = bt.feeds.PandasData(
@@ -140,10 +140,10 @@ if __name__ == '__main__':
     cerebro.adddata(data)
 
     # Set our desired cash start
-    cerebro.broker.setcash(1000.0)
+    cerebro.broker.setcash(100000000.0)
 
     # Add a FixedSize sizer according to the stake
-    cerebro.addsizer(bt.sizers.FixedSize, stake=10)
+    cerebro.addsizer(bt.sizers.FixedSize, stake=100)
 
     # Set the commission
     cerebro.broker.setcommission(commission=0.0)

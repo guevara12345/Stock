@@ -79,6 +79,11 @@ class XueqiuDownloader:
 
     def download_dkline_from_xueqiu4backtest(self, code, day_num):
         result = self.download_dkline_from_xueqiu(code, day_num)
+        if result is not None:
+            # 时区硬转utc+8，excel不支持时区信息
+            result['datetime'] = pd.to_datetime(
+                result['timestamp']+(8*3600)*1000, unit='ms')
+            return result.set_index('datetime')
 
     def download_dkline_from_xueqiu4daily(self, code, day_num):
         result = self.download_dkline_from_xueqiu(code, day_num)
