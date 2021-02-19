@@ -143,7 +143,8 @@ class DongcaiDownloader:
             stock_rating = rsp.json()['pjtj']
             if len(stock_rating) > 0:
                 latest_rating = stock_rating[0]['pjxs']
-            predict_list = sorted(rsp.json()['mgsy'], key=lambda i: i['year'])
+            roe_list = [x['jzcsyl'].split('(')[0]
+                        for x in rsp.json()['yctj']['data']]
             eps_list = [x['mgsy'].split('(')[0]
                         for x in rsp.json()['yctj']['data']]
             pro_grow_ratio = None
@@ -152,12 +153,26 @@ class DongcaiDownloader:
                     float(eps_list[4])-float(eps_list[2]))/abs(float(eps_list[2]))
                 if two_year_growth >= 0:
                     pro_grow_ratio = ((1+two_year_growth)**0.5-1)*100
+            if eps_list[2] != '--' and eps_list[3] != '--':
+                this_pro_ratio = (
+                    float(eps_list[3])-float(eps_list[2]))/abs(float(eps_list[2]))
+            else:
+                this_pro_ratio = None
+            if eps_list[2] != '--' and eps_list[3] != '--':
+                next_pro_ratio = (
+                    float(eps_list[4])-float(eps_list[3]))/abs(float(eps_list[3]))
+            else:
+                next_pro_ratio = None
             return {
                 'rate': latest_rating,
-                'lastyear': predict_list[0],
-                'thisyear': predict_list[1],
-                'nextyear': predict_list[2],
-                'pro_grow_ratio': pro_grow_ratio}
+                'eps': float(eps_list[2]) if eps_list[2] != '--' else None,
+                'thisyear': rsp.json()['yctj']['data'][3]['rq'],
+                'this_roe': float(roe_list[3]) if roe_list[3] != '--' else None,
+                'next_roe': float(roe_list[4]) if roe_list[4] != '--' else None,
+                'this_pro_ratio': this_pro_ratio,
+                'next_pro_ratio': next_pro_ratio,
+                'pro_grow_ratio': pro_grow_ratio,
+            }
 
     # 业绩预测
     def get_predict_profit(self, code, last_report_date):

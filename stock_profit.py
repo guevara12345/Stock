@@ -63,22 +63,21 @@ class StockProfit:
             broker_predict = dongcai_d.get_broker_predict(code)
             if broker_predict['rate'] is not None:
                 today['rating'] = float(broker_predict['rate'])
-            if broker_predict['lastyear'] is not None:
-                today['eps'] = float(broker_predict['lastyear']['value'])
-                if today['pb'] is not None and today['pe'] is not None:
-                    today['roe'] = today['pb']/today['pe']
+            if broker_predict['eps'] is not None:
+                today['eps'] = broker_predict['eps']
+            if today['pb'] is not None and today['pe'] is not None:
+                today['roe_ttm'] = today['pb']/today['pe']
             if broker_predict['thisyear'] is not None:
-                today['bp_year1'] = broker_predict['thisyear']['year']
-                today['bp_eps1'] = float(broker_predict['thisyear']['value'])
-                if broker_predict['thisyear']['ratio'] != '-':
-                    today['bp_ratio1'] = float(
-                        broker_predict['thisyear']['ratio'])/100
-            if broker_predict['nextyear'] is not None:
-                today['bp_year2'] = broker_predict['nextyear']['year']
-                today['bp_eps2'] = float(broker_predict['nextyear']['value'])
-                if broker_predict['nextyear']['ratio'] != '-':
-                    today['bp_ratio2'] = float(
-                        broker_predict['nextyear']['ratio'])/100
+                today['bp_year1'] = broker_predict['thisyear']
+            if broker_predict['this_roe'] is not None:
+                today['bp_roe1'] = broker_predict['this_roe']/100
+            if broker_predict['next_roe'] is not None:
+                today['bp_roe2'] = broker_predict['next_roe']/100
+            if broker_predict['this_pro_ratio'] is not None:
+                today['this_p_r'] = broker_predict['this_pro_ratio']
+            if broker_predict['next_pro_ratio'] is not None:
+                today['next_p_r'] = broker_predict['next_pro_ratio']
+
             if broker_predict['pro_grow_ratio'] is not None and broker_predict['pro_grow_ratio'] >= 0:
                 if today['pe'] is not None and today['pe'] > 0:
                     today['peg'] = today['pe']/broker_predict['pro_grow_ratio']
@@ -141,10 +140,10 @@ class StockProfit:
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
-        df = df[['code_name', 'industry', 'pe', 'pb', 'eps', 'roe', 'peg', 'close',
+        df = df[['code_name', 'industry', 'pe', 'pb', 'eps', 'roe_ttm', 'peg', 'close',
                  'm_cap', 'f_cap', 'f_hold', 'f_last', 'f_chg',
                  'r_date', 'r_eps', 'r_kf_eps', 'r_pro_yoy', 'r_rev_yoy',
-                 'rating', 'bp_year1', 'bp_eps1', 'bp_eps2', 'bp_ratio1',  'bp_ratio2',
+                 'rating', 'bp_year1', 'bp_roe1', 'bp_roe2','this_p_r','next_p_r',
                  'predict_date', 'pre_r_date', 'pre_type', 'pre_pro+', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
@@ -173,7 +172,7 @@ class StockProfit:
             worksheet.set_column('H:H', None, format1)
             worksheet.set_column('L:N', None, format2)
             worksheet.set_column('R:S', None, format2)
-            worksheet.set_column('X:Y', None, format2)
+            worksheet.set_column('V:Y', None, format2)
             worksheet.set_column('AC:AC', None, format2)
 
             # worksheet.set_row(0, None, row_format)

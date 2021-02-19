@@ -96,6 +96,9 @@ class StockReporter:
                 by='datetime', ascending=False).iloc[0]['pe']
             df.loc[code, 'pb'] = stock_df.sort_values(
                 by='datetime', ascending=False).iloc[0]['pb']
+            stock_info = xueqiu_d.download_stock_detail_from_xueqiu(code)
+            df.loc[code, 'cap'] = stock_info['market_value']//100000000
+            df.loc[code, 'f_cap'] = stock_info['float_market_capital']//100000000
 
             df.loc[code, 'std20'] = vol.count_volatility(stock_df)
             c = hk.count_hk_holding_rate(stock_df)
@@ -121,7 +124,7 @@ class StockReporter:
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
                  '(p-ma26)/p', 'dif/p', '(dif-dea)/p',
                  'turnover', 'm(ma5-ma20)/m', 'std20',
-                 'pe', 'pb', 'pe_percent', 'pb_percent',
+                 'cap', 'f_cap', 'pe', 'pb', 'pe_percent', 'pb_percent',
                  'hk_ratio', 'hk-ma(hk,10)', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
@@ -146,7 +149,7 @@ class StockReporter:
             # worksheet.set_column('E:E', None, format1)
             worksheet.set_column('F:I', None, format2)
             worksheet.set_column('K:L', None, format2)
-            worksheet.set_column('O:R', None, format2)
+            worksheet.set_column('Q:T', None, format2)
             # worksheet.set_row(0, None, row_format)
 
             # Freeze the first row.
