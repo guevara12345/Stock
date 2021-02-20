@@ -40,6 +40,7 @@ class StockReporter:
         zz500_df = self.apply_strategy4zz500()
         time_str = datetime.now().strftime('%H%M%S')
         self.save2file(f'daily_zz500_{time_str}', zz500_df)
+        
         hs300_df = self.apply_strategy4hs300()
         self.save2file(f'daily_hs300_{time_str}', hs300_df)
         self.save2file(
@@ -52,8 +53,8 @@ class StockReporter:
     def apply_strategy4watching(self):
         print('start generate watching stocks report')
         stocks_dict = {}
-        stocks_dict.update(config.watching_stocks)
-        stocks_dict.update(config.holding_stocks)
+        for i in config.watching_stocks:
+            stocks_dict[i['code']] = i['code_name']
         watching_df_dict = {}
         for code in stocks_dict.keys():
             watching_df_dict[code] = xueqiu_d.download_dkline_from_xueqiu4daily(

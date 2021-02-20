@@ -1,9 +1,17 @@
 {
-    "holding_stocks": {
-        "sz.002594": "比亚迪",
-        "sz.002371": "北方华创"
-    },
     "watching_stocks": [
+        {
+            "code": "sz.002594",
+            "code_name": "比亚迪",
+            "add_date": "2021-02-15",
+            "add_reason": ""
+        },
+        {
+            "code": "sz.002371",
+            "code_name": "北方华创",
+            "add_date": "2021-02-15",
+            "add_reason": ""
+        },
         {
             "code": "sz.300144",
             "code_name": "宋城演艺",
@@ -149,20 +157,8 @@
             "add_reason": ""
         },
         {
-            "code": "sz.002007",
-            "code_name": "华兰生物",
-            "add_date": "2021-02-15",
-            "add_reason": ""
-        },
-        {
             "code": "sz.002241",
             "code_name": "歌尔股份",
-            "add_date": "2021-02-15",
-            "add_reason": ""
-        },
-        {
-            "code": "sh.600276",
-            "code_name": "恒瑞医药",
             "add_date": "2021-02-15",
             "add_reason": ""
         },
