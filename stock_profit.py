@@ -113,7 +113,7 @@ class StockProfit:
                     today['pre_pro+'] = express_info['profit_yoy']/100
                 # if express_info[5] is not None:
                 #     today['express_pro_qoq'] = express_info[5]/100
-            today['industry'] = basic.get_industry(code)
+            today['industry'] = df_stocks.loc[code,'industry']
             today[
                 'url'] = f'http://emweb.securities.eastmoney.com/NewFinanceAnalysis/Index?type=web&code={capital_code}'
             # today['predict_date'] = predict_info[0]

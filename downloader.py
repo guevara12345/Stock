@@ -104,6 +104,7 @@ class XueqiuDownloader:
             return {
                 'market_value': detail_json['quote']['market_capital'],
                 'float_market_capital': detail_json['quote']['float_market_capital'],
+                'vol_ratio':detail_json['quote']['volume_ratio'],
             }
 
 

@@ -40,7 +40,7 @@ class StockReporter:
         zz500_df = self.apply_strategy4zz500()
         time_str = datetime.now().strftime('%H%M%S')
         self.save2file(f'daily_zz500_{time_str}', zz500_df)
-        
+
         hs300_df = self.apply_strategy4hs300()
         self.save2file(f'daily_hs300_{time_str}', hs300_df)
         self.save2file(
@@ -69,8 +69,8 @@ class StockReporter:
                 'datetime').sort_index(ascending=False).iloc[0]
             today['code'] = code
             today['code_name'] = stocks_dict[code]
-            today['url'] = 'http://quote.eastmoney.com/{}.html'.format(
-                code_formatter.code2nopoint(code))
+            today['url'] = 'https://xueqiu.com/S/{}'.format(
+                code_formatter.code2capita(code))
             today['industry'] = basic.get_industry(code)
             watching_df = watching_df.append(today)
 
@@ -88,10 +88,9 @@ class StockReporter:
             ema_info = double_ma.double_ma_13_21(stock_df)
             df.loc[code, 'price'] = ema_info['close']
             df.loc[code, 'chg_rate'] = ema_info['chg_percent']/100
-            df.loc[code, '(p-ma26)/p'] = ema_info['(p-ema26)/p']
             df.loc[code, 'dif/p'] = ema_info['dif/p']
-            df.loc[code, 'dea/p'] = ema_info['dea/p']
-            df.loc[code, '(dif-dea)/p'] = ema_info['(dif-dea)/p']
+            df.loc[code, 'macd/p'] = ema_info['macd/p']
+            df.loc[code, 'macd_chg/p'] = ema_info['macd_chg/p']
 
             df.loc[code, 'pe'] = stock_df.sort_values(
                 by='datetime', ascending=False).iloc[0]['pe']
@@ -100,6 +99,7 @@ class StockReporter:
             stock_info = xueqiu_d.download_stock_detail_from_xueqiu(code)
             df.loc[code, 'cap'] = stock_info['market_value']//100000000
             df.loc[code, 'f_cap'] = stock_info['float_market_capital']//100000000
+            df.loc[code, 'vol_ratio'] = stock_info['vol_ratio']
 
             df.loc[code, 'std20'] = vol.count_volatility(stock_df)
             c = hk.count_hk_holding_rate(stock_df)
@@ -112,8 +112,7 @@ class StockReporter:
                     code, 'pb_percent'] = pe_pb.count_pe_pb_band(stock_df)
 
             vol_info = vol.count_quantity_ratio(stock_df)
-            df.loc[code, 'turnover'] = vol_info['turnover']
-            df.loc[code, 'm(ma5-ma20)/m'] = vol_info['m(ma5-ma20)/m']
+            df.loc[code, 'turnover'] = vol_info['turnover']/100
 
         return df
 
@@ -123,8 +122,8 @@ class StockReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
-                 '(p-ma26)/p', 'dif/p', '(dif-dea)/p',
-                 'turnover', 'm(ma5-ma20)/m', 'std20',
+                 'dif/p', 'macd/p', 'macd_chg/p',
+                 'turnover', 'vol_ratio', 'std20',
                  'cap', 'f_cap', 'pe', 'pb', 'pe_percent', 'pb_percent',
                  'hk_ratio', 'hk-ma(hk,10)', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
@@ -148,8 +147,8 @@ class StockReporter:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('F:I', None, format2)
-            worksheet.set_column('K:L', None, format2)
+            worksheet.set_column('F:J', None, format2)
+            worksheet.set_column('L:L', None, format2)
             worksheet.set_column('Q:T', None, format2)
             # worksheet.set_row(0, None, row_format)
 
@@ -177,8 +176,8 @@ class EtfIndexReporter:
                 'datetime').sort_index(ascending=False).iloc[0]
             today['code'] = code
             today['code_name'] = config.wangtching_etf_index[code]
-            code_without_point = code_formatter.code2nopoint(code)
-            today['url'] = f'http://quote.eastmoney.com/{code_without_point}.html'
+            code2capita = code_formatter.code2capita(code)
+            today['url'] = f'https://xueqiu.com/S/{code2capita}'
             etf_index_df = etf_index_df.append(today)
 
         etf_index_df = etf_index_df.reset_index(drop=True).set_index('code')
@@ -197,16 +196,15 @@ class EtfIndexReporter:
                 single_etf_index_df_dict[code])
             etf_index_df.loc[code, 'price'] = ema_info['close']
             etf_index_df.loc[code, 'chg_rate'] = ema_info['chg_percent']/100
-            etf_index_df.loc[code, '(p-ma26)/p'] = ema_info['(p-ema26)/p']
             etf_index_df.loc[code, 'dif/p'] = ema_info['dif/p']
-            etf_index_df.loc[code, 'dea/p'] = ema_info['dea/p']
-            etf_index_df.loc[code, '(dif-dea)/p'] = ema_info['(dif-dea)/p']
+            etf_index_df.loc[code, 'macd/p'] = ema_info['macd/p']
+            etf_index_df.loc[code, 'macd_chg/p'] = ema_info['macd_chg/p']
 
             etf_index_df.loc[code, 'std20'] = vol.count_volatility(
                 single_etf_index_df_dict[code])
-            vol_info = vol.count_quantity_ratio(single_etf_index_df_dict[code])
-            etf_index_df.loc[code, 'turnover'] = vol_info['turnover']
-            etf_index_df.loc[code, 'm(ma5-ma20)/m'] = vol_info['m(ma5-ma20)/m']
+            stock_info = xueqiu_d.download_stock_detail_from_xueqiu(code)
+
+            etf_index_df.loc[code, 'vol_ratio'] = stock_info['vol_ratio']
         return etf_index_df
 
     def save2file(self, filename, df: pd.DataFrame):
@@ -215,8 +213,8 @@ class EtfIndexReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'highest_date', 'price', 'chg_rate',
-                 '(p-ma26)/p', 'dif/p', '(dif-dea)/p',
-                 'turnover', 'm(ma5-ma20)/m', 'std20', 'url']]
+                 'dif/p', 'macd/p', 'macd_chg/p',
+                 'vol_ratio', 'std20', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
@@ -239,7 +237,7 @@ class EtfIndexReporter:
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
             worksheet.set_column('E:H', None, format2)
-            worksheet.set_column('J:K', None, format2)
+            worksheet.set_column('J:J', None, format2)
             # worksheet.set_row(0, None, row_format)
 
             # Freeze the first row.

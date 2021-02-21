@@ -39,18 +39,15 @@ class StrategyDoubleMa:
         df['DEA'] = df['DIF'].ewm(
             span=9, adjust=False).mean()
         df = df.sort_values(by='datetime', ascending=False)
-        b = (
-            df.iloc[0]['PRICE-MA26']/df.iloc[0]['close'],
-            df.iloc[0]['PRICE-MA12']/df.iloc[0]['close'],
-            df.iloc[0]['DIF']/df.iloc[0]['close']
-        )
+        macd = 2*(df.iloc[0]['DIF']-df.iloc[0]['DEA'])/df.iloc[0]['close']
+        macd_change = 2*(df.iloc[0]['DIF']-df.iloc[0]['DEA'] +
+                         df.iloc[1]['DIF']-df.iloc[1]['DEA'])/df.iloc[0]['close']
         return {
             'close': df.iloc[0]['close'],
             'chg_percent': df.iloc[0]['percent'],
-            '(p-ema26)/p': df.iloc[0]['PRICE-MA26']/df.iloc[0]['close'],
             'dif/p': df.iloc[0]['DIF']/df.iloc[0]['close'],
-            'dea/p': df.iloc[0]['DEA']/df.iloc[0]['close'],
-            '(dif-dea)/p': (df.iloc[0]['DIF']-df.iloc[0]['DEA'])/df.iloc[0]['close'],
+            'macd/p': macd,
+            'macd_chg/p': macd_change,
         }
 
 
@@ -68,7 +65,6 @@ class StrategyVolatilityVol:
         df = df.sort_values(by='datetime', ascending=False)
         return {
             'turnover': df.iloc[0]['turnoverrate'],
-            'm(ma5-ma20)/m': df.iloc[0]['mount(ma5-ma20)']/df.iloc[0]['amount'],
         }
 
 
