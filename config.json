@@ -1,6 +1,18 @@
 {
     "watching_stocks": [
         {
+            "code": "sz.300285",
+            "code_name": "国瓷材料",
+            "add_date": "2021-02-21",
+            "add_reason": ""
+        },
+        {
+            "code": "sh.601021",
+            "code_name": "春秋航空",
+            "add_date": "2021-02-21",
+            "add_reason": "旅游业恢复"
+        },
+        {
             "code": "sz.002594",
             "code_name": "比亚迪",
             "add_date": "2021-02-15",

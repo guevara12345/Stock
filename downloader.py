@@ -149,7 +149,7 @@ class DongcaiDownloader:
         if rsp.status_code == 200 and rsp.json() is not None:
             stock_rating = rsp.json()['pjtj']
             if len(stock_rating) > 0:
-                latest_rating = stock_rating[0]['pjxs']
+                latest_rating = stock_rating[2]['pjxs']
             roe_list = [x['jzcsyl'].split('(')[0]
                         for x in rsp.json()['yctj']['data']]
             pro_list = rsp.json()['gsjlr']
