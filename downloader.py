@@ -5,6 +5,7 @@ import time
 import os
 import json
 import requests
+import math
 
 from code_formmat import code_formatter
 
@@ -102,9 +103,14 @@ class XueqiuDownloader:
             print(f'download stock detail of {capital_code}')
             detail_json = rsp.json()['data']
             return {
+                'roe': detail_json['quote']['pb']/detail_json['quote']['pe_lyr'],
+                'price': detail_json['quote']['last_close'],
+                'eps': detail_json['quote']['eps'],
+                'pe_ttm': detail_json['quote']['pe_ttm'],
+                'pb': detail_json['quote']['pb'],
                 'market_value': detail_json['quote']['market_capital'],
                 'float_market_capital': detail_json['quote']['float_market_capital'],
-                'vol_ratio':detail_json['quote']['volume_ratio'],
+                'vol_ratio': detail_json['quote']['volume_ratio'],
             }
 
 
@@ -146,32 +152,36 @@ class DongcaiDownloader:
                 latest_rating = stock_rating[0]['pjxs']
             roe_list = [x['jzcsyl'].split('(')[0]
                         for x in rsp.json()['yctj']['data']]
-            eps_list = [x['mgsy'].split('(')[0]
-                        for x in rsp.json()['yctj']['data']]
+            pro_list = rsp.json()['gsjlr']
+            f_roe_list = [
+                float(x) if x != '--' else None for x in roe_list]
+
+            f_pro_list = []
+            for i in range(len(pro_list)):
+                if pro_list[i]['ratio'] == '-' and i == 0:
+                    f_pro_list.append(None)
+                # no prediction
+                elif math.isclose(float(pro_list[i]['value']), 0.0):
+                    f_pro_list.append(None)
+                elif pro_list[i]['ratio'] == '-' and i != 0:
+                    r = (float(pro_list[i]['value'])-float(pro_list[i-1]
+                                                           ['value']))/abs(float(pro_list[i-1]['value']))
+                    f_pro_list.append(r*100)
+                else:
+                    f_pro_list.append(float(pro_list[i]['ratio']))
+
             pro_grow_ratio = None
-            if eps_list[2] != '--' and eps_list[4] != '--':
-                two_year_growth = (
-                    float(eps_list[4])-float(eps_list[2]))/abs(float(eps_list[2]))
+            if not math.isclose(float(pro_list[2]['value'])*float(pro_list[0]['value']), 0):
+                two_year_growth = (float(
+                    pro_list[2]['value'])-float(pro_list[0]['value']))/abs(float(pro_list[0]['value']))
                 if two_year_growth >= 0:
                     pro_grow_ratio = ((1+two_year_growth)**0.5-1)*100
-            if eps_list[2] != '--' and eps_list[3] != '--':
-                this_pro_ratio = (
-                    float(eps_list[3])-float(eps_list[2]))/abs(float(eps_list[2]))
-            else:
-                this_pro_ratio = None
-            if eps_list[2] != '--' and eps_list[3] != '--':
-                next_pro_ratio = (
-                    float(eps_list[4])-float(eps_list[3]))/abs(float(eps_list[3]))
-            else:
-                next_pro_ratio = None
+
             return {
                 'rate': latest_rating,
-                'eps': float(eps_list[2]) if eps_list[2] != '--' else None,
                 'thisyear': rsp.json()['yctj']['data'][3]['rq'],
-                'this_roe': float(roe_list[3]) if roe_list[3] != '--' else None,
-                'next_roe': float(roe_list[4]) if roe_list[4] != '--' else None,
-                'this_pro_ratio': this_pro_ratio,
-                'next_pro_ratio': next_pro_ratio,
+                'roe_list': f_roe_list[2:5],
+                'pro_ratio_list': f_pro_list[0:3],
                 'pro_grow_ratio': pro_grow_ratio,
             }
 
@@ -255,4 +265,5 @@ if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
     # bao_d.get_from_xls('000300')
     # xueqiu_d.download_dkline_from_xueqiu('sh.600438', 52*5)
-    dongcai_d.get_fund_holding('sh.600928')
+    # dongcai_d.get_fund_holding('sh.600928')
+    dongcai_d.get_broker_predict('sh.603885')
