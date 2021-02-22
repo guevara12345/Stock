@@ -8,7 +8,7 @@ import xlsxwriter
 from downloader import bao_d, xueqiu_d
 from basic_stock_data import basic
 from code_formmat import code_formatter
-from strategy_basic import new_high, double_ma, vol, hk, pe_pb
+from indicator import indi
 from get_config import config
 
 
@@ -82,10 +82,9 @@ class StockReporter:
         for code in df.index.values.tolist():
             stock_df = xueqiu_d.download_dkline_from_xueqiu4daily(code, 52*5)
 
-            df.loc[code, 'highest_date'] = new_high.new_highest_date_with_xiuquedata(
-                stock_df)
+            df.loc[code, 'highest_date'] = indi.new_highest_date(stock_df)
 
-            ema_info = double_ma.double_ma_13_21(stock_df)
+            ema_info = indi.macd(stock_df['close'])
             df.loc[code, 'price'] = ema_info['close']
             df.loc[code, 'chg_rate'] = ema_info['chg_percent']/100
             df.loc[code, 'dif/p'] = ema_info['dif/p']
@@ -101,17 +100,17 @@ class StockReporter:
             df.loc[code, 'f_cap'] = stock_info['float_market_capital']//100000000
             df.loc[code, 'vol_ratio'] = stock_info['vol_ratio']
 
-            df.loc[code, 'std20'] = vol.count_volatility(stock_df)
-            c = hk.count_hk_holding_rate(stock_df)
+            df.loc[code, 'std20'] = indi.count_volatility(stock_df)
+            c = indi.count_hk_holding_rate(stock_df)
             if c is not None:
                 df.loc[code, 'hk_ratio'] = c[0]/100
                 df.loc[code, 'hk-ma(hk,10)'] = c[1]/100
                 df.loc[code, 'hk-ma(hk,30)'] = c[2]/100
             if df.loc[code, 'pe'] > 0:
                 df.loc[code, 'pe_percent'], df.loc[
-                    code, 'pb_percent'] = pe_pb.count_pe_pb_band(stock_df)
+                    code, 'pb_percent'] = indi.count_pe_pb_band(stock_df)
 
-            vol_info = vol.count_quantity_ratio(stock_df)
+            vol_info = indi.count_quantity_ratio(stock_df)
             df.loc[code, 'turnover'] = vol_info['turnover']/100
 
         return df
@@ -162,57 +161,44 @@ class StockReporter:
 class EtfIndexReporter:
     def generate_etf_index_report(self):
         print('start generate etf_index report')
-        single_etf_index_df_dict = dict()
-        for code in config.wangtching_etf_index.keys():
-            single_etf_index_df_dict[code] = xueqiu_d.download_dkline_from_xueqiu4daily(
-                code, 52*5)
-
+        watch_data_dict = config.wangtching_etf_index
         etf_index_df = None
-        for code in single_etf_index_df_dict.keys():
-            if etf_index_df is None:
-                etf_index_df = pd.DataFrame(
-                    columns=single_etf_index_df_dict[code].columns)
-            today = single_etf_index_df_dict[code].set_index(
-                'datetime').sort_index(ascending=False).iloc[0]
-            today['code'] = code
-            today['code_name'] = config.wangtching_etf_index[code]
-            code2capita = code_formatter.code2capita(code)
-            today['url'] = f'https://xueqiu.com/S/{code2capita}'
-            etf_index_df = etf_index_df.append(today)
-
+        for i in watch_data_dict:
+            if i['data_source'] == 'xueqiu':
+                i['df'] = xueqiu_d.download_dkline_from_xueqiu4daily(
+                    i['code'], 52*5)
+                i['series'] = i['df'].sort_index(ascending=False).iloc[0]
+                i['series']['code'] = i['code']
+                i['series']['code_name'] = i['code_name']
+                i['series']['url'] = 'https://xueqiu.com/S/{}'.format(
+                    code_formatter.code2capita(i['code']))
+                self.apply_strategy(i['series'], i['df'])
+                if etf_index_df is None:
+                    etf_index_df = pd.DataFrame(columns=i['series'].index)
+                etf_index_df = etf_index_df.append(i['series'])
         etf_index_df = etf_index_df.reset_index(drop=True).set_index('code')
-        etf_index_df = self.apply_strategy(
-            etf_index_df, single_etf_index_df_dict)
-
         time_str = datetime.now().strftime('%H%M%S')
         self.save2file(f'daily_etf_index_{time_str}', etf_index_df)
 
-    def apply_strategy(self, etf_index_df, single_etf_index_df_dict):
-        for code in single_etf_index_df_dict.keys():
-            etf_index_df.loc[code, 'highest_date'] = new_high.new_highest_date_with_xiuquedata(
-                single_etf_index_df_dict[code])
+    def apply_strategy(self, result, df):
+        result['highest_date'] = indi.new_highest_date(df['close'])
 
-            ema_info = double_ma.double_ma_13_21(
-                single_etf_index_df_dict[code])
-            etf_index_df.loc[code, 'price'] = ema_info['close']
-            etf_index_df.loc[code, 'chg_rate'] = ema_info['chg_percent']/100
-            etf_index_df.loc[code, 'dif/p'] = ema_info['dif/p']
-            etf_index_df.loc[code, 'macd/p'] = ema_info['macd/p']
-            etf_index_df.loc[code, 'macd_chg/p'] = ema_info['macd_chg/p']
+        ema_info = indi.macd(df['close'])
+        result['dif/p'] = ema_info['dif/p']
+        result['macd/p'] = ema_info['macd/p']
+        result['macd_chg/p'] = ema_info['macd_chg/p']
 
-            etf_index_df.loc[code, 'std20'] = vol.count_volatility(
-                single_etf_index_df_dict[code])
-            stock_info = xueqiu_d.download_stock_detail_from_xueqiu(code)
-
-            etf_index_df.loc[code, 'vol_ratio'] = stock_info['vol_ratio']
-        return etf_index_df
+        result['std20'] = indi.count_volatility(df[['close','high','low']])
+        stock_info = xueqiu_d.download_stock_detail_from_xueqiu(result['code'])
+        result['vol_ratio'] = stock_info['vol_ratio']
+        return result
 
     def save2file(self, filename, df: pd.DataFrame):
         folder_name = datetime.now().strftime('%Y%b%d')
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
-        df = df[['code_name', 'highest_date', 'price', 'chg_rate',
+        df = df[['code_name', 'highest_date', 'close', 'percent',
                  'dif/p', 'macd/p', 'macd_chg/p',
                  'vol_ratio', 'std20', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
@@ -248,8 +234,8 @@ class EtfIndexReporter:
 
 
 if __name__ == '__main__':
-    sr = StockReporter()
-    sr.generate_report()
+    # sr = StockReporter()
+    # sr.generate_report()
 
     eir = EtfIndexReporter()
     eir.generate_etf_index_report()

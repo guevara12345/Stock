@@ -9,7 +9,7 @@ from downloader import bao_d, xueqiu_d
 from code_formmat import code_formatter
 
 
-class StrategyNewHighest:
+class Indicator:
 
     def new_highest_date_with_baodata(self, code: str):
         dataFrame = bao_d.download_dayline_from_bao(code)
@@ -19,16 +19,13 @@ class StrategyNewHighest:
             by='close', ascending=False).iloc[0]['datetime']
         return highest_date
 
-    def new_highest_date_with_xiuquedata(self, dataFrame: pd.DataFrame):
-        half_year_df = dataFrame.sort_values(
-            by='datetime', ascending=False)[0:26*5-1]
-        highest_date = half_year_df.sort_values(
-            by='close', ascending=False).iloc[0]['datetime']
+    def new_highest_date(self, series):
+        half_year_series = series.sort_index(ascending=False)[0:26*5-1]
+        highest_date = half_year_series.sort_values(ascending=False).index[0]
         return highest_date
 
-
-class StrategyDoubleMa:
-    def double_ma_13_21(self, df):
+    def macd(self, series):
+        df = pd.DataFrame({'close': series})
         df['MA12'] = df['close'].ewm(
             span=12, adjust=False).mean()
         df['MA26'] = df['close'].ewm(
@@ -36,25 +33,27 @@ class StrategyDoubleMa:
         df['PRICE-MA26'] = df['close']-df['MA26']
         df['PRICE-MA12'] = df['close']-df['MA12']
         df['DIF'] = df['MA12']-df['MA26']
-        df['DEA'] = df['DIF'].ewm(
-            span=9, adjust=False).mean()
+        df['DEA'] = df['DIF'].ewm(span=9, adjust=False).mean()
         df = df.sort_values(by='datetime', ascending=False)
         macd = 2*(df.iloc[0]['DIF']-df.iloc[0]['DEA'])/df.iloc[0]['close']
         macd_change = 2*(df.iloc[0]['DIF']-df.iloc[0]['DEA'] +
                          df.iloc[1]['DIF']-df.iloc[1]['DEA'])/df.iloc[0]['close']
         return {
-            'close': df.iloc[0]['close'],
-            'chg_percent': df.iloc[0]['percent'],
+            # 'close': df.iloc[0]['close'],
+            # 'chg_percent': df.iloc[0]['percent'],
             'dif/p': df.iloc[0]['DIF']/df.iloc[0]['close'],
             'macd/p': macd,
             'macd_chg/p': macd_change,
         }
 
-
-class StrategyVolatilityVol:
     def count_volatility(self, df):
-        df['STD20'] = df['percent'].ewm(
-            span=20, adjust=False).std()
+        df['h-l'] = df['high']-df['low']
+        df['h-last_c'] = df['high']-df['close']+df['close'].diff()
+        df['last_c-l'] = df['close']-df['close'].diff()-df['low']
+        df['tr'] = df[['h-l', 'h-last_c', 'last_c-l']].max(axis=1)
+        df['atr'] = df['tr'].ewm(span=20, adjust=False).mean()
+        df['atr/p'] = df['tr']/df['close']
+        df['unit4me'] = 0.01/df['atr/p']
         df = df.sort_values(by='datetime', ascending=False)
         a = df.iloc[0]['STD20']
         return a/100
@@ -67,8 +66,6 @@ class StrategyVolatilityVol:
             'turnover': df.iloc[0]['turnoverrate'],
         }
 
-
-class StrategyHkHolding:
     def count_hk_holding_rate(self, df):
         df['hold_ratio_ma10'] = df['hold_ratio_cn'].ewm(
             span=5, adjust=False).mean()
@@ -81,8 +78,6 @@ class StrategyHkHolding:
                  df.iloc[1]['hold_ratio_cn']-df.iloc[1]['hold_ratio_ma30'])
             return r
 
-
-class StrategyPePbBand:
     def count_pe_pb_band(self, df):
         year_df = df.sort_values(by='datetime', ascending=False)[0:52*5-1]
         pe_max = year_df['pe'].max()
@@ -96,8 +91,4 @@ class StrategyPePbBand:
         return year_df.iloc[0]['pe_percent'], year_df.iloc[0]['pb_percent']
 
 
-vol = StrategyVolatilityVol()
-double_ma = StrategyDoubleMa()
-new_high = StrategyNewHighest()
-hk = StrategyHkHolding()
-pe_pb = StrategyPePbBand()
+indi = Indicator()

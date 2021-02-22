@@ -92,7 +92,7 @@ class XueqiuDownloader:
             # 时区硬转utc+8，excel不支持时区信息
             result['datetime'] = pd.to_datetime(
                 result['timestamp']+(8*3600)*1000, unit='ms')
-            return result
+            return result.set_index('datetime')
 
     def download_stock_detail_from_xueqiu(self, code):
         capital_code = code_formatter.code2capita(code)
@@ -101,16 +101,21 @@ class XueqiuDownloader:
         rsp = self.session.get(url)
         if rsp.status_code == 200:
             print(f'download stock detail of {capital_code}')
-            detail_json = rsp.json()['data']
+            detail_json = rsp.json()['data']['quote']
+            if detail_json.get('pb') and detail_json.get('pe_lyr'):
+                roe = detail_json.get('pb') / \
+                    detail_json.get('pe_lyr')
+            else:
+                roe = None
             return {
-                'roe': detail_json['quote']['pb']/detail_json['quote']['pe_lyr'],
-                'price': detail_json['quote']['last_close'],
-                'eps': detail_json['quote']['eps'],
-                'pe_ttm': detail_json['quote']['pe_ttm'],
-                'pb': detail_json['quote']['pb'],
-                'market_value': detail_json['quote']['market_capital'],
-                'float_market_capital': detail_json['quote']['float_market_capital'],
-                'vol_ratio': detail_json['quote']['volume_ratio'],
+                'roe': roe,
+                'price': detail_json.get('last_close'),
+                'eps': detail_json.get('eps'),
+                'pe_ttm': detail_json.get('pe_ttm'),
+                'pb': detail_json.get('pb'),
+                'market_value': detail_json.get('market_capital'),
+                'float_market_capital': detail_json.get('float_market_capital'),
+                'vol_ratio': detail_json.get('volume_ratio'),
             }
 
 
@@ -257,9 +262,45 @@ class DongcaiDownloader:
         }
 
 
+class WallcnDownloader:
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update(
+            {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'})
+        self.session.get('https://wallstreetcn.com/')
+
+    def download_dkline_from_xueqiu(self, code, day_num):
+        WALL_D_KLINE_URL_FORMAT = '''
+            https://api-ddc.wallstcn.com/market/kline?prod_code={}&tick_count={}&period_type=86400&fields=tick_at%2Copen_px%2Cclose_px%2Chigh_px%2Clow_px%2Cturnover_volume%2Cturnover_value%2Caverage_px%2Cpx_change%2Cpx_change_rate%2Cavg_px%2Cma2
+            '''
+        url = WALL_D_KLINE_URL_FORMAT.format(code, day_num)
+        rsp = self.session.get(url)
+        if rsp.status_code == 200:
+            print(
+                f'download {day_num} days history day_kline data of {code}')
+            dkline_json = rsp.json()
+            result = pd.DataFrame(
+                dkline_json['data']['item'], columns=dkline_json['data']['column'])
+            return result
+
+    def download_dkline_from_xueqiu4backtest(self, code, day_num):
+        result = self.download_dkline_from_xueqiu(code, day_num)
+        if result is not None:
+            result['datetime'] = pd.to_datetime(result['timestamp'], unit='s')
+            return result.set_index('datetime')
+
+    def download_dkline_from_xueqiu4daily(self, code, day_num):
+        result = self.download_dkline_from_xueqiu(code, day_num)
+        if result is not None:
+            result['datetime'] = pd.to_datetime(result['timestamp'], unit='s')
+            return result
+
+
+
 bao_d = BaoDownloader()
 xueqiu_d = XueqiuDownloader()
 dongcai_d = DongcaiDownloader()
+wall = WallcnDownloader()
 
 if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
@@ -267,3 +308,4 @@ if __name__ == '__main__':
     # xueqiu_d.download_dkline_from_xueqiu('sh.600438', 52*5)
     # dongcai_d.get_fund_holding('sh.600928')
     dongcai_d.get_broker_predict('sh.603885')
+    wall.download_dkline_from_xueqiu

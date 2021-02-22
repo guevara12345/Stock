@@ -4,15 +4,28 @@ import re
 class Formatter:
     def code2capita(self, code):
         m = re.match(r'(\S{2})\.(\d{6})', code)
-        return (m.group(1)+m.group(2)).upper()
+        if m:
+            return (m.group(1)+m.group(2)).upper()
+        else:
+            # 非a股code
+            return code
 
     def code2nopoint(self, code):
         m = re.match(r'(\S{2})\.(\d{6})', code)
-        return m.group(1)+m.group(2)
+        if m:
+            return m.group(1)+m.group(2)
+        else:
+            # 非a股code
+            return code
 
     def code2code_without_char(self, code):
         m = re.match(r'(\S{2})\.(\d{6})', code)
-        return m.group(2)
+        if m:
+            return m.group(2)
+        else:
+            # 非a股code
+            return code
+
 
 code_formatter = Formatter()
 
