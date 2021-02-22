@@ -61,7 +61,7 @@ class XueqiuDownloader:
             {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'})
         self.session.get('https://xueqiu.com/')
 
-    def download_dkline_from_xueqiu(self, code, day_num):
+    def download_dkline(self, code, day_num):
         XUEQIU_D_KLINE_URL_FORMAT = '''
             https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol={}&begin={}&period=day&type=before&count={}&indicator=kline,pe,pb,ps,pcf,market_capital,agt,ggt,balance
             '''
@@ -72,29 +72,29 @@ class XueqiuDownloader:
         rsp = self.session.get(url)
         if rsp.status_code == 200:
             print(
-                f'download {day_num} days history day_kline data of {capital_code}')
+                f'download {day_num} days day_kline data of {capital_code}')
             dkline_json = rsp.json()
             result = pd.DataFrame(
                 dkline_json['data']['item'], columns=dkline_json['data']['column'])
             return result
 
-    def download_dkline_from_xueqiu4backtest(self, code, day_num):
-        result = self.download_dkline_from_xueqiu(code, day_num)
+    def download_dkline4backtest(self, code, day_num):
+        result = self.download_dkline(code, day_num)
         if result is not None:
             # 时区硬转utc+8，excel不支持时区信息
             result['datetime'] = pd.to_datetime(
                 result['timestamp']+(8*3600)*1000, unit='ms')
             return result.set_index('datetime')
 
-    def download_dkline_from_xueqiu4daily(self, code, day_num):
-        result = self.download_dkline_from_xueqiu(code, day_num)
+    def download_dkline4daily(self, code, day_num):
+        result = self.download_dkline(code, day_num)
         if result is not None:
             # 时区硬转utc+8，excel不支持时区信息
             result['datetime'] = pd.to_datetime(
                 result['timestamp']+(8*3600)*1000, unit='ms')
             return result.set_index('datetime')
 
-    def download_stock_detail_from_xueqiu(self, code):
+    def download_stock_detail(self, code):
         capital_code = code_formatter.code2capita(code)
         URL_FORMAT = 'https://stock.xueqiu.com/v5/stock/quote.json?symbol={}&extend=detail'
         url = URL_FORMAT.format(capital_code)
@@ -269,7 +269,7 @@ class WallcnDownloader:
             {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'})
         self.session.get('https://wallstreetcn.com/')
 
-    def download_dkline_from_xueqiu(self, code, day_num):
+    def download_dkline(self, code, day_num):
         WALL_D_KLINE_URL_FORMAT = '''
             https://api-ddc.wallstcn.com/market/kline?prod_code={}&tick_count={}&period_type=86400&fields=tick_at%2Copen_px%2Cclose_px%2Chigh_px%2Clow_px%2Cturnover_volume%2Cturnover_value%2Caverage_px%2Cpx_change%2Cpx_change_rate%2Cavg_px%2Cma2
             '''
@@ -277,35 +277,36 @@ class WallcnDownloader:
         rsp = self.session.get(url)
         if rsp.status_code == 200:
             print(
-                f'download {day_num} days history day_kline data of {code}')
+                f'download {day_num} days day_kline data of {code}')
             dkline_json = rsp.json()
-            result = pd.DataFrame(
-                dkline_json['data']['item'], columns=dkline_json['data']['column'])
-            return result
+            if dkline_json.get('code') == 20000:
+                data = dkline_json['data']
+                result = pd.DataFrame(
+                    data['candle'][code]['lines'], columns=data['fields'])
+                return result
 
-    def download_dkline_from_xueqiu4backtest(self, code, day_num):
-        result = self.download_dkline_from_xueqiu(code, day_num)
+    def download_dkline4backtest(self, code, day_num):
+        result = self.download_dkline(code, day_num)
         if result is not None:
             result['datetime'] = pd.to_datetime(result['timestamp'], unit='s')
             return result.set_index('datetime')
 
-    def download_dkline_from_xueqiu4daily(self, code, day_num):
-        result = self.download_dkline_from_xueqiu(code, day_num)
+    def download_dkline4daily(self, code, day_num):
+        result = self.download_dkline(code, day_num)
         if result is not None:
-            result['datetime'] = pd.to_datetime(result['timestamp'], unit='s')
-            return result
-
+            result['datetime'] = pd.to_datetime(result['tick_at'], unit='s')
+            return result.set_index('datetime')
 
 
 bao_d = BaoDownloader()
 xueqiu_d = XueqiuDownloader()
 dongcai_d = DongcaiDownloader()
-wall = WallcnDownloader()
+wall_d = WallcnDownloader()
 
 if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
     # bao_d.get_from_xls('000300')
-    # xueqiu_d.download_dkline_from_xueqiu('sh.600438', 52*5)
+    xueqiu_d.download_dkline('sh.600438', 52*5)
     # dongcai_d.get_fund_holding('sh.600928')
-    dongcai_d.get_broker_predict('sh.603885')
-    wall.download_dkline_from_xueqiu
+    # dongcai_d.get_broker_predict('sh.603885')
+    wall_d.download_dkline4daily('US10YR.OTC', 52*5)

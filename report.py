@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import time
 import xlsxwriter
 
-from downloader import bao_d, xueqiu_d
+from downloader import bao_d, xueqiu_d, wall_d
 from basic_stock_data import basic
 from code_formmat import code_formatter
 from indicator import indi
@@ -52,27 +52,18 @@ class StockReporter:
 
     def apply_strategy4watching(self):
         print('start generate watching stocks report')
-        stocks_dict = {}
-        for i in config.watching_stocks:
-            stocks_dict[i['code']] = i['code_name']
-        watching_df_dict = {}
-        for code in stocks_dict.keys():
-            watching_df_dict[code] = xueqiu_d.download_dkline_from_xueqiu4daily(
-                code, 52*5)
-
         watching_df = None
-        for code in watching_df_dict.keys():
+        no_dup_dict = {}
+        for x in config.watching_stocks:
+            no_dup_dict[x['code']] = x
+        for stock in no_dup_dict.values():
             if watching_df is None:
-                watching_df = pd.DataFrame(
-                    columns=watching_df_dict[code].columns)
-            today = watching_df_dict[code].set_index(
-                'datetime').sort_index(ascending=False).iloc[0]
-            today['code'] = code
-            today['code_name'] = stocks_dict[code]
-            today['url'] = 'https://xueqiu.com/S/{}'.format(
-                code_formatter.code2capita(code))
-            today['industry'] = basic.get_industry(code)
-            watching_df = watching_df.append(today)
+                watching_df = pd.DataFrame()
+            series = pd.Series(stock)
+            series['url'] = 'https://xueqiu.com/S/{}'.format(
+                code_formatter.code2capita(stock['code']))
+            series['industry'] = basic.get_industry(stock['code'])
+            watching_df = watching_df.append(series, ignore_index=True)
 
         watching_df = watching_df.reset_index(drop=True).set_index('code')
         watching_df = self.apply_strategy4stocks(watching_df)
@@ -80,39 +71,47 @@ class StockReporter:
 
     def apply_strategy4stocks(self, df):
         for code in df.index.values.tolist():
-            stock_df = xueqiu_d.download_dkline_from_xueqiu4daily(code, 52*5)
+            stock_df = xueqiu_d.download_dkline4daily(code, 52*5)
 
-            df.loc[code, 'highest_date'] = indi.new_highest_date(stock_df)
+            df.loc[code, 'highest_date'] = indi.new_highest_date(
+                stock_df['close'])
 
             ema_info = indi.macd(stock_df['close'])
-            df.loc[code, 'price'] = ema_info['close']
-            df.loc[code, 'chg_rate'] = ema_info['chg_percent']/100
+
             df.loc[code, 'dif/p'] = ema_info['dif/p']
             df.loc[code, 'macd/p'] = ema_info['macd/p']
             df.loc[code, 'macd_chg/p'] = ema_info['macd_chg/p']
 
-            df.loc[code, 'pe'] = stock_df.sort_values(
-                by='datetime', ascending=False).iloc[0]['pe']
-            df.loc[code, 'pb'] = stock_df.sort_values(
-                by='datetime', ascending=False).iloc[0]['pb']
-            stock_info = xueqiu_d.download_stock_detail_from_xueqiu(code)
+            sorted_df = stock_df.sort_values(by='datetime', ascending=False)
+            df.loc[code, 'pe'] = sorted_df.iloc[0]['pe']
+            df.loc[code, 'pb'] = sorted_df.iloc[0]['pb']
+            df.loc[code, 'price'] = sorted_df.iloc[0]['close']
+            df.loc[code, 'chg_rate'] = sorted_df.iloc[0]['percent']/100
+
+            stock_info = xueqiu_d.download_stock_detail(code)
             df.loc[code, 'cap'] = stock_info['market_value']//100000000
             df.loc[code, 'f_cap'] = stock_info['float_market_capital']//100000000
             df.loc[code, 'vol_ratio'] = stock_info['vol_ratio']
 
-            df.loc[code, 'std20'] = indi.count_volatility(stock_df)
-            c = indi.count_hk_holding_rate(stock_df)
-            if c is not None:
-                df.loc[code, 'hk_ratio'] = c[0]/100
-                df.loc[code, 'hk-ma(hk,10)'] = c[1]/100
-                df.loc[code, 'hk-ma(hk,30)'] = c[2]/100
+            volatility_info = indi.count_volatility(
+                stock_df[['close', 'high', 'low']])
+            df.loc[code, 'atr/p'] = volatility_info['atr/p']
+            df.loc[code, 'unit4me'] = volatility_info['unit4me']
+
+            hk_info = indi.count_hk_holding_rate(stock_df)
+            if hk_info is not None:
+                df.loc[code, 'hk_ratio'] = hk_info['hk_ratio']/100
+                df.loc[code, 'hk-ma(hk,10)'] = hk_info['hk-ma(hk,10)']/100
+                df.loc[code, 'hk-ma(hk,30)'] = hk_info['hk-ma(hk,30)']/100
+
             if df.loc[code, 'pe'] > 0:
-                df.loc[code, 'pe_percent'], df.loc[
-                    code, 'pb_percent'] = indi.count_pe_pb_band(stock_df)
+                pepb_band = indi.count_pe_pb_band(stock_df)
+                df.loc[code, 'pe_percent'] = pepb_band['pe_percent']
+                df.loc[code, 'pb_percent'] = pepb_band['pb_percent']
+                df.loc[code, 'roe_ttm'] = df.loc[code, 'pb']/df.loc[code, 'pe']
 
             vol_info = indi.count_quantity_ratio(stock_df)
             df.loc[code, 'turnover'] = vol_info['turnover']/100
-
         return df
 
     def save2file(self, filename, df: pd.DataFrame):
@@ -122,40 +121,47 @@ class StockReporter:
 
         df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
                  'dif/p', 'macd/p', 'macd_chg/p',
-                 'turnover', 'vol_ratio', 'std20',
-                 'cap', 'f_cap', 'pe', 'pb', 'pe_percent', 'pb_percent',
+                 'turnover', 'vol_ratio', 'atr/p', 'unit4me',
+                 'cap', 'f_cap',  'pe', 'pb', 'roe_ttm', 'pe_percent', 'pb_percent',
                  'hk_ratio', 'hk-ma(hk,10)', 'url']]
-        with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
-                            datetime_format='yyyy-mm-dd',
-                            engine='xlsxwriter',
-                            options={'remove_timezone': True}) as writer:
-            # Convert the dataframe to an XlsxWriter Excel object.
-            df.to_excel(writer, encoding="gbk", sheet_name='Sheet1')
+        writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
+                                datetime_format='yyyy-mm-dd',
+                                engine='xlsxwriter',
+                                options={'remove_timezone': True})
+        # Convert the dataframe to an XlsxWriter Excel object.
+        df.to_excel(writer, encoding="gbk", sheet_name='Sheet1')
 
-            # Get the xlsxwriter workbook and worksheet objects.
-            workbook = writer.book
-            worksheet = writer.sheets['Sheet1']
+        # Get the xlsxwriter workbook and worksheet objects.
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
 
-            # Add some cell formats.
-            # format1 = workbook.add_format({'num_format': 'yyyy-mm-dd'})
-            format2 = workbook.add_format({'num_format': '0.00%'})
-            # row_format = workbook.add_format({'bg_color': 'green'})
+        # Add some cell formats.
+        # format1 = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+        format2 = workbook.add_format({'num_format': '0.00%'})
+        # row_format = workbook.add_format({'bg_color': 'green'})
 
-            # Note: It isn't possible to format any cells that already have a format such
-            # as the index or headers or any cells that contain dates or datetimes.
+        worksheet.set_column('F:J', None, format2)
+        worksheet.set_column('L:M', None, format2)
+        worksheet.set_column('R:V', None, format2)
+        color_format = {'type': 'data_bar', 'bar_solid': True}
+        worksheet.conditional_format('F1:F801', color_format)
+        worksheet.conditional_format('G1:G801', color_format)
+        worksheet.conditional_format('H1:H801', color_format)
+        worksheet.conditional_format('I1:I801', color_format)
+        worksheet.conditional_format('J1:J801', color_format)
+        worksheet.conditional_format('K1:K801', color_format)
+        worksheet.conditional_format('R1:R801', color_format)
+        worksheet.conditional_format('S1:S801', color_format)
+        worksheet.conditional_format('U1:U801', color_format)
+        worksheet.conditional_format('V1:V801', color_format)
 
-            # Set the format but not the column width.
-            # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('F:J', None, format2)
-            worksheet.set_column('L:L', None, format2)
-            worksheet.set_column('Q:T', None, format2)
-            # worksheet.set_row(0, None, row_format)
+        # worksheet.set_row(0, None, row_format)
 
-            # Freeze the first row.
-            worksheet.freeze_panes(1, 3)
+        # Freeze the first row.
+        worksheet.freeze_panes(1, 3)
 
-            # Close the Pandas Excel writer and output the Excel file.
-            writer.save()
+        # Close the Pandas Excel writer and output the Excel file.
+        writer.save()
 
 
 class EtfIndexReporter:
@@ -164,23 +170,44 @@ class EtfIndexReporter:
         watch_data_dict = config.wangtching_etf_index
         etf_index_df = None
         for i in watch_data_dict:
+            i['series'] = pd.Series(i)
             if i['data_source'] == 'xueqiu':
-                i['df'] = xueqiu_d.download_dkline_from_xueqiu4daily(
+                i['df'] = xueqiu_d.download_dkline4daily(
                     i['code'], 52*5)
-                i['series'] = i['df'].sort_index(ascending=False).iloc[0]
-                i['series']['code'] = i['code']
-                i['series']['code_name'] = i['code_name']
-                i['series']['url'] = 'https://xueqiu.com/S/{}'.format(
-                    code_formatter.code2capita(i['code']))
-                self.apply_strategy(i['series'], i['df'])
-                if etf_index_df is None:
-                    etf_index_df = pd.DataFrame(columns=i['series'].index)
-                etf_index_df = etf_index_df.append(i['series'])
+            elif i['data_source'] == 'wallstreetcn':
+                i['df'] = wall_d.download_dkline4daily(i['code'], 52*5)
+
+            self.apply_strategy(i)
+            if etf_index_df is None:
+                etf_index_df = pd.DataFrame(columns=i['series'].index)
+            etf_index_df = etf_index_df.append(i['series'], ignore_index=True)
         etf_index_df = etf_index_df.reset_index(drop=True).set_index('code')
         time_str = datetime.now().strftime('%H%M%S')
         self.save2file(f'daily_etf_index_{time_str}', etf_index_df)
 
-    def apply_strategy(self, result, df):
+    def apply_strategy(self, stock):
+        df = stock['df']
+
+        result = stock['series']
+        if stock['data_source'] == 'xueqiu':
+            result['url'] = 'https://xueqiu.com/S/{}'.format(
+                code_formatter.code2capita(stock['code']))
+            stock_info = xueqiu_d.download_stock_detail(result['code'])
+            result['vol_ratio'] = stock_info['vol_ratio']
+            df_sorted = df.sort_index(ascending=False)
+            result['close'] = df_sorted.iloc[0]['close']
+
+        elif stock['data_source'] == 'wallstreetcn':
+            result['url'] = 'https://wallstreetcn.com/markets/codes/{}'.format(
+                stock['code'])
+            df = df.rename(
+                columns={'open_px': 'open', 'close_px': 'close', 'high_px': 'high',
+                         'low_px': 'low', 'px_change_rate': 'percent', })
+            df_sorted = df.sort_index(ascending=False)
+            result['close'] = df_sorted.iloc[0]['close']
+
+        result['percent'] = df_sorted.iloc[0]['percent']/100
+
         result['highest_date'] = indi.new_highest_date(df['close'])
 
         ema_info = indi.macd(df['close'])
@@ -188,9 +215,10 @@ class EtfIndexReporter:
         result['macd/p'] = ema_info['macd/p']
         result['macd_chg/p'] = ema_info['macd_chg/p']
 
-        result['std20'] = indi.count_volatility(df[['close','high','low']])
-        stock_info = xueqiu_d.download_stock_detail_from_xueqiu(result['code'])
-        result['vol_ratio'] = stock_info['vol_ratio']
+        volatility_info = indi.count_volatility(df[['close', 'high', 'low']])
+        result['atr/p'] = volatility_info['atr/p']
+        result['unit4me'] = volatility_info['unit4me']
+
         return result
 
     def save2file(self, filename, df: pd.DataFrame):
@@ -200,42 +228,39 @@ class EtfIndexReporter:
 
         df = df[['code_name', 'highest_date', 'close', 'percent',
                  'dif/p', 'macd/p', 'macd_chg/p',
-                 'vol_ratio', 'std20', 'url']]
-        with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
-                            datetime_format='yyyy-mm-dd',
-                            engine='xlsxwriter',
-                            options={'remove_timezone': True}) as writer:
-            # Convert the dataframe to an XlsxWriter Excel object.
-            df.to_excel(writer, encoding="gbk", sheet_name='Sheet1')
+                 'vol_ratio', 'atr/p', 'unit4me', 'url']]
+        writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
+                                datetime_format='yyyy-mm-dd',
+                                engine='xlsxwriter',
+                                options={'remove_timezone': True})
+        # Convert the dataframe to an XlsxWriter Excel object.
+        df.to_excel(writer, encoding="gbk", sheet_name='Sheet1')
 
-            # Get the xlsxwriter workbook and worksheet objects.
-            workbook = writer.book
-            worksheet = writer.sheets['Sheet1']
+        # Get the xlsxwriter workbook and worksheet objects.
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
 
-            # Add some cell formats.
-            # format1 = workbook.add_format({'num_format': 'yyyy-mm-dd'})
-            format2 = workbook.add_format({'num_format': '0.00%'})
-            # row_format = workbook.add_format({'bg_color': 'green'})
+        # Add some cell formats.
+        format2 = workbook.add_format({'num_format': '0.00%'})
+        worksheet.set_column('E:H', None, format2)
+        worksheet.set_column('J:K', None, format2)
+        color_format = {'type': 'data_bar', 'bar_solid': True}
+        worksheet.conditional_format('E1:E801', color_format)
+        worksheet.conditional_format('F1:F801', color_format)
+        worksheet.conditional_format('G1:G801', color_format)
+        worksheet.conditional_format('H1:H801', color_format)
+        worksheet.conditional_format('J1:J801', color_format)
 
-            # Note: It isn't possible to format any cells that already have a format such
-            # as the index or headers or any cells that contain dates or datetimes.
+        # Freeze the first row.
+        worksheet.freeze_panes(1, 0)
 
-            # Set the format but not the column width.
-            # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('E:H', None, format2)
-            worksheet.set_column('J:J', None, format2)
-            # worksheet.set_row(0, None, row_format)
-
-            # Freeze the first row.
-            worksheet.freeze_panes(1, 0)
-
-            # Close the Pandas Excel writer and output the Excel file.
-            writer.save()
+        # Close the Pandas Excel writer and output the Excel file.
+        writer.save()
 
 
 if __name__ == '__main__':
-    # sr = StockReporter()
-    # sr.generate_report()
+    sr = StockReporter()
+    sr.generate_report()
 
     eir = EtfIndexReporter()
     eir.generate_etf_index_report()

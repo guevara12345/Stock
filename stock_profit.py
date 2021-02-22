@@ -38,7 +38,7 @@ class StockProfit:
             print(f'get profit info of {code}')
             capital_code = code_formatter.code2capita(code)
 
-            market_capital_info = xueqiu_d.download_stock_detail_from_xueqiu(
+            market_capital_info = xueqiu_d.download_stock_detail(
                 code)
             df_stocks.loc[code,
                           'm_cap'] = market_capital_info['market_value']//100000000

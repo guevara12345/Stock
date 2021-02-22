@@ -219,10 +219,50 @@
     ],
     "wangtching_etf_index": [
         {
-            "code": "US10YR.OTC",
-            "code_name": "US10YR",
+            "code": "CN10YR.OTC",
+            "code_name": "中国10年期国债收益率",
             "data_source": "wallstreetcn"
-        },        
+        },
+        {
+            "code": "US10YR.OTC",
+            "code_name": "美国10年期国债收益率",
+            "data_source": "wallstreetcn"
+        },
+        {
+            "code": "DXY.OTC",
+            "code_name": "美元指数",
+            "data_source": "wallstreetcn"
+        },
+        {
+            "code": "USDCNH.OTC",
+            "code_name": "离岸人民币",
+            "data_source": "wallstreetcn"
+        },
+        {
+            "code": "USCL.OTC",
+            "code_name": "WTI原油",
+            "data_source": "wallstreetcn"
+        },
+        {
+            "code": "USGC.OTC",
+            "code_name": "纽约金",
+            "data_source": "wallstreetcn"
+        },
+        {
+            "code": "USSI.OTC",
+            "code_name": "纽约银",
+            "data_source": "wallstreetcn"
+        },
+        {
+            "code": "USHG.OTC",
+            "code_name": "纽约铜",
+            "data_source": "wallstreetcn"
+        },
+        {
+            "code": "BTCUSD.Bitfinex",
+            "code_name": "比特币/美元",
+            "data_source": "wallstreetcn"
+        },
         {
             "code": ".INX",
             "code_name": "标普500指数",

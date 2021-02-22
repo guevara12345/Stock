@@ -34,29 +34,35 @@ class Indicator:
         df['PRICE-MA12'] = df['close']-df['MA12']
         df['DIF'] = df['MA12']-df['MA26']
         df['DEA'] = df['DIF'].ewm(span=9, adjust=False).mean()
+        df['macd'] = 2*(df['DIF']-df['DEA'])
         df = df.sort_values(by='datetime', ascending=False)
-        macd = 2*(df.iloc[0]['DIF']-df.iloc[0]['DEA'])/df.iloc[0]['close']
-        macd_change = 2*(df.iloc[0]['DIF']-df.iloc[0]['DEA'] +
-                         df.iloc[1]['DIF']-df.iloc[1]['DEA'])/df.iloc[0]['close']
+
+        macd_change = (df.iloc[0]['macd']-df.iloc[1]
+                       ['macd'])/df.iloc[0]['close']
         return {
             # 'close': df.iloc[0]['close'],
             # 'chg_percent': df.iloc[0]['percent'],
             'dif/p': df.iloc[0]['DIF']/df.iloc[0]['close'],
-            'macd/p': macd,
+            'macd/p': df.iloc[0]['macd']/df.iloc[0]['close'],
             'macd_chg/p': macd_change,
         }
 
-    def count_volatility(self, df):
+    def count_volatility(self, data_frame):
+        df = data_frame[['close', 'high', 'low']]
         df['h-l'] = df['high']-df['low']
         df['h-last_c'] = df['high']-df['close']+df['close'].diff()
         df['last_c-l'] = df['close']-df['close'].diff()-df['low']
         df['tr'] = df[['h-l', 'h-last_c', 'last_c-l']].max(axis=1)
-        df['atr'] = df['tr'].ewm(span=20, adjust=False).mean()
-        df['atr/p'] = df['tr']/df['close']
+        df['atr'] = df['tr'].ewm(alpha=1/20, adjust=False).mean()
+        df['atr/p'] = df['atr']/df['close']
         df['unit4me'] = 0.01/df['atr/p']
-        df = df.sort_values(by='datetime', ascending=False)
-        a = df.iloc[0]['STD20']
-        return a/100
+
+        r = df.sort_index(ascending=False).iloc[0]
+        return {
+            'atr': r['atr'],
+            'atr/p': r['atr/p'],
+            'unit4me': r['unit4me'],
+        }
 
     def count_quantity_ratio(self, df):
         df['mount(ma5-ma20)'] = df['amount'].rolling(window=5).mean() - \
@@ -73,10 +79,10 @@ class Indicator:
             span=15, adjust=False).mean()
         df = df.sort_values(by='datetime', ascending=False)
         if df.iloc[1]['hold_ratio_cn'] is not None:
-            r = (df.iloc[1]['hold_ratio_cn'],
-                 df.iloc[1]['hold_ratio_cn']-df.iloc[1]['hold_ratio_ma10'],
-                 df.iloc[1]['hold_ratio_cn']-df.iloc[1]['hold_ratio_ma30'])
-            return r
+            return {
+                'hk_ratio': df.iloc[1]['hold_ratio_cn'],
+                'hk-ma(hk,10)': df.iloc[1]['hold_ratio_cn']-df.iloc[1]['hold_ratio_ma10'],
+                'hk-ma(hk,30)': df.iloc[1]['hold_ratio_cn']-df.iloc[1]['hold_ratio_ma30']}
 
     def count_pe_pb_band(self, df):
         year_df = df.sort_values(by='datetime', ascending=False)[0:52*5-1]
@@ -88,7 +94,9 @@ class Indicator:
         pb_min = year_df['pb'].min()
         year_df['pb_percent'] = year_df['pb'].apply(
             lambda x: (x-pb_min)/(pb_max-pb_min))
-        return year_df.iloc[0]['pe_percent'], year_df.iloc[0]['pb_percent']
+        return {
+            'pe_percent': year_df.iloc[0]['pe_percent'],
+            'pb_percent': year_df.iloc[0]['pb_percent']}
 
 
 indi = Indicator()
