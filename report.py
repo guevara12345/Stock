@@ -73,7 +73,7 @@ class StockReporter:
         for code in df.index.values.tolist():
             stock_df = xueqiu_d.download_dkline4daily(code, 52*5)
 
-            df.loc[code, 'highest_date'] = indi.new_highest_date(
+            df.loc[code, 'highest'] = indi.new_highest_date(
                 stock_df['close'])
 
             ema_info = indi.macd(stock_df['close'])
@@ -119,7 +119,7 @@ class StockReporter:
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
-        df = df[['code_name', 'industry', 'highest_date', 'price', 'chg_rate',
+        df = df[['code_name', 'industry', 'highest', 'price', 'chg_rate',
                  'dif/p', 'macd/p', 'macd_chg/p',
                  'turnover', 'vol_ratio', 'atr/p', 'unit4me',
                  'cap', 'f_cap',  'pe', 'pb', 'roe_ttm', 'pe_percent', 'pb_percent',
@@ -143,7 +143,8 @@ class StockReporter:
         worksheet.set_column('F:J', None, format2)
         worksheet.set_column('L:M', None, format2)
         worksheet.set_column('R:V', None, format2)
-        color_format = {'type': 'data_bar', 'bar_solid': True}
+        color_format = {'type': 'data_bar',
+                        'bar_solid': True, 'bar_color': '#4169E1', }
         worksheet.conditional_format('F1:F801', color_format)
         worksheet.conditional_format('G1:G801', color_format)
         worksheet.conditional_format('H1:H801', color_format)
@@ -193,6 +194,7 @@ class EtfIndexReporter:
             result['url'] = 'https://xueqiu.com/S/{}'.format(
                 code_formatter.code2capita(stock['code']))
             stock_info = xueqiu_d.download_stock_detail(result['code'])
+            result['is_open'] = stock_info['is_open']
             result['vol_ratio'] = stock_info['vol_ratio']
             df_sorted = df.sort_index(ascending=False)
             result['close'] = df_sorted.iloc[0]['close']
@@ -208,7 +210,7 @@ class EtfIndexReporter:
 
         result['percent'] = df_sorted.iloc[0]['percent']/100
 
-        result['highest_date'] = indi.new_highest_date(df['close'])
+        result['highest'] = indi.new_highest_date(df['close'])
 
         ema_info = indi.macd(df['close'])
         result['dif/p'] = ema_info['dif/p']
@@ -226,7 +228,7 @@ class EtfIndexReporter:
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
-        df = df[['code_name', 'highest_date', 'close', 'percent',
+        df = df[['code_name', 'is_open', 'highest', 'close', 'percent',
                  'dif/p', 'macd/p', 'macd_chg/p',
                  'vol_ratio', 'atr/p', 'unit4me', 'url']]
         writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
@@ -242,14 +244,21 @@ class EtfIndexReporter:
 
         # Add some cell formats.
         format2 = workbook.add_format({'num_format': '0.00%'})
-        worksheet.set_column('E:H', None, format2)
-        worksheet.set_column('J:K', None, format2)
-        color_format = {'type': 'data_bar', 'bar_solid': True}
-        worksheet.conditional_format('E1:E801', color_format)
+        worksheet.set_column('F:I', None, format2)
+        worksheet.set_column('K:L', None, format2)
+
+        color_format = {'type': 'data_bar',
+                        'bar_solid': True, 'bar_color': '#4169E1', }
         worksheet.conditional_format('F1:F801', color_format)
         worksheet.conditional_format('G1:G801', color_format)
         worksheet.conditional_format('H1:H801', color_format)
-        worksheet.conditional_format('J1:J801', color_format)
+        worksheet.conditional_format('I1:I801', color_format)
+        worksheet.conditional_format('K1:K801', color_format)
+
+        format1 = workbook.add_format({'bg_color': '#4169E1', })
+        worksheet.conditional_format(
+            'C1:C801', {'type': 'cell', 'criteria': 'equal to',
+                        'value': '"Y"', 'format': format1})
 
         # Freeze the first row.
         worksheet.freeze_panes(1, 0)

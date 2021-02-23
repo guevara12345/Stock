@@ -102,12 +102,14 @@ class XueqiuDownloader:
         if rsp.status_code == 200:
             print(f'download stock detail of {capital_code}')
             detail_json = rsp.json()['data']['quote']
+            market_json = rsp.json()['data']['market']
             if detail_json.get('pb') and detail_json.get('pe_lyr'):
                 roe = detail_json.get('pb') / \
                     detail_json.get('pe_lyr')
             else:
                 roe = None
             return {
+                'is_open': 'Y' if market_json.get('status_id') == 5 else 'N',
                 'roe': roe,
                 'price': detail_json.get('last_close'),
                 'eps': detail_json.get('eps'),
