@@ -103,11 +103,17 @@ class XueqiuDownloader:
             print(f'download stock detail of {capital_code}')
             detail_json = rsp.json()['data']['quote']
             market_json = rsp.json()['data']['market']
+
+            roe = None
             if detail_json.get('pb') and detail_json.get('pe_lyr'):
                 roe = detail_json.get('pb') / \
                     detail_json.get('pe_lyr')
-            else:
-                roe = None
+            market_capital = None
+            if detail_json.get('market_capital'):
+                market_capital = detail_json.get('market_capital')/100000000
+            float_market_capital = None
+            if detail_json.get('float_market_capital'):
+                float_market_capital = detail_json.get('float_market_capital')/100000000
             return {
                 'is_open': 'Y' if market_json.get('status_id') == 5 else 'N',
                 'roe': roe,
@@ -115,8 +121,8 @@ class XueqiuDownloader:
                 'eps': detail_json.get('eps'),
                 'pe_ttm': detail_json.get('pe_ttm'),
                 'pb': detail_json.get('pb'),
-                'market_value': detail_json.get('market_capital'),
-                'float_market_capital': detail_json.get('float_market_capital'),
+                'market_value': market_capital,
+                'float_market_capital': float_market_capital,
                 'vol_ratio': detail_json.get('volume_ratio'),
             }
 
@@ -142,10 +148,10 @@ class DongcaiDownloader:
             p_json = rsp.json()[0]
             return {
                 'date': p_json['date'] if p_json['date'] != '--' else None,
-                'eps': p_json['jbmgsy'] if p_json['jbmgsy'] != '--' else None,
-                'kf_eps': p_json['kfmgsy'] if p_json['kfmgsy'] != '--' else None,
-                'profit_yoy': p_json['kfjlrtbzz'] if p_json['kfjlrtbzz'] != '--' else None,
-                'revenue_yoy': p_json['yyzsrtbzz'] if p_json['yyzsrtbzz'] != '--' else None,
+                'eps': float(p_json['jbmgsy']) if p_json['jbmgsy'] != '--' else None,
+                'kf_eps': float(p_json['kfmgsy']) if p_json['kfmgsy'] != '--' else None,
+                'profit_yoy': float(p_json['kfjlrtbzz'])/100 if p_json['kfjlrtbzz'] != '--' else None,
+                'revenue_yoy': float(p_json['yyzsrtbzz'])/100 if p_json['yyzsrtbzz'] != '--' else None,
             }
 
     # 券商研报预测
@@ -160,51 +166,40 @@ class DongcaiDownloader:
             roe_list = [x['jzcsyl'].split('(')[0]
                         for x in rsp.json()['yctj']['data']]
             pro_list = rsp.json()['gsjlr']
-            f_roe_list = [
-                float(x) if x != '--' else None for x in roe_list]
-
-            f_pro_list = []
-            for i in range(len(pro_list)):
-                if pro_list[i]['ratio'] == '-' and i == 0:
-                    f_pro_list.append(None)
-                # no prediction
-                elif math.isclose(float(pro_list[i]['value']), 0.0):
-                    f_pro_list.append(None)
-                elif pro_list[i]['ratio'] == '-' and i != 0:
-                    r = (float(pro_list[i]['value'])-float(pro_list[i-1]
-                                                           ['value']))/abs(float(pro_list[i-1]['value']))
-                    f_pro_list.append(r*100)
-                else:
-                    f_pro_list.append(float(pro_list[i]['ratio']))
+            f_roe_list = [float(x)/100 if x !=
+                          '--' else None for x in roe_list]
+            f_pro_list = [
+                float(x['value'])/100000000 if x['value'] != '0.00' else None for x in pro_list]
 
             pro_grow_ratio = None
-            if not math.isclose(float(pro_list[2]['value'])*float(pro_list[0]['value']), 0):
-                two_year_growth = (float(
-                    pro_list[2]['value'])-float(pro_list[0]['value']))/abs(float(pro_list[0]['value']))
+            if f_pro_list[2] and f_pro_list[0]:
+                two_year_growth = (
+                    f_pro_list[2]-f_pro_list[0])/abs(f_pro_list[0])
                 if two_year_growth >= 0:
                     pro_grow_ratio = ((1+two_year_growth)**0.5-1)*100
 
             return {
-                'rate': latest_rating,
+                'rate': float(latest_rating),
                 'thisyear': rsp.json()['yctj']['data'][3]['rq'],
                 'roe_list': f_roe_list[2:5],
-                'pro_ratio_list': f_pro_list[0:3],
+                'pro_list': f_pro_list[0:3],
                 'pro_grow_ratio': pro_grow_ratio,
             }
 
     # 业绩预测
-    def get_predict_profit(self, code, last_report_date):
+    def get_advance_report(self, code, last_report_date):
         code_without_char = code_formatter.code2code_without_char(code)
         url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_PUBLIC_OP_PREDICT'
         rsp = self.session.get(url)
-        if rsp.status_code == 200 and rsp.json()['result'] is not None:
+        if rsp.status_code == 200 and rsp.json()['result']:
             predict = rsp.json()['result']['data'][0]
             if(datetime.fromisoformat(predict['REPORTDATE']) > last_report_date):
                 return {
                     'release_date': predict['NOTICE_DATE'],
                     'report_date': predict['REPORTDATE'],
                     'predict_type': predict['FORECASTTYPE'],
-                    'increase': predict['INCREASEL']}
+                    'increase': predict['INCREASEL']/100 if predict['INCREASEL'] is not None else None,
+                }
 
     # 业绩快报
     def get_express_profit(self, code, last_report_date):
@@ -219,8 +214,9 @@ class DongcaiDownloader:
                     'report_date': express['REPORT_DATE'],
                     'revenue': express['YSTZ'],
                     'revenue_qoq': express['DJDYSHZ'],
-                    'profit_yoy': express['JLRTBZCL'],
-                    'profit_qoq': express['DJDJLHZ']}
+                    'profit_yoy': express['JLRTBZCL']/100,
+                    'profit_qoq': express['DJDJLHZ']/100
+                }
 
     def get_fund_holding(self, code):
         code2capita = code_formatter.code2capita(code)
@@ -258,9 +254,11 @@ class DongcaiDownloader:
                 if i['jglx'] in fund_type and i['zltgbl'] != '--':
                     last_2quarter_fund_holding = last_2quarter_fund_holding+float(
                         i['zltgbl'].split('%')[0])
+        last_quarter = last_quarter_fund_holding/100
+        last_2quarter = last_2quarter_fund_holding/100
         return {
-            'last_quarter': last_quarter_fund_holding/100,
-            'last_2quarter': last_2quarter_fund_holding/100,
+            'last_quarter': last_quarter if last_quarter > 0 else None,
+            'last_2quarter': last_2quarter if last_2quarter > 0 else None,
         }
 
 
@@ -308,7 +306,7 @@ wall_d = WallcnDownloader()
 if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
     # bao_d.get_from_xls('000300')
-    xueqiu_d.download_dkline('sh.600438', 52*5)
+    # xueqiu_d.download_dkline('sh.600438', 52*5)
     # dongcai_d.get_fund_holding('sh.600928')
-    # dongcai_d.get_broker_predict('sh.603885')
-    wall_d.download_dkline4daily('US10YR.OTC', 52*5)
+    dongcai_d.get_broker_predict('sh.600011')
+    # wall_d.download_dkline4daily('US10YR.OTC', 52*5)

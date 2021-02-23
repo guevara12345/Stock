@@ -7,7 +7,7 @@ if __name__ == '__main__':
     basic.hs300_index_component()
     basic.zz500_index_component()
 
-    # sr.generate_report()
+    sr.generate_report()
     eir.generate_etf_index_report()
 
-    # profit.generate_report()
+    profit.generate_report()
