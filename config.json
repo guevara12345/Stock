@@ -274,6 +274,11 @@
             "data_source": "xueqiu"
         },
         {
+            "code": "HKHSI",
+            "code_name": "恒生指数",
+            "data_source": "xueqiu"
+        }
+        {
             "code": "sh.000001",
             "code_name": "上证指数",
             "data_source": "xueqiu"
@@ -366,6 +371,26 @@
         {
             "code": "sh.512010",
             "code_name": "医药ETF",
+            "data_source": "xueqiu"
+        },
+        {
+            "code": "sh.515220",
+            "code_name": "煤炭ETF",
+            "data_source": "xueqiu"
+        },
+        {
+            "code": "sh.515210",
+            "code_name": "钢铁ETF",
+            "data_source": "xueqiu"
+        },
+        {
+            "code": "sh.512720",
+            "code_name": "计算机ETF",
+            "data_source": "xueqiu"
+        },
+        {
+            "code": "sh.512200",
+            "code_name": "房地产ETF",
             "data_source": "xueqiu"
         }
     ]

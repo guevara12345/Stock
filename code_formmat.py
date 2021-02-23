@@ -3,7 +3,7 @@ import re
 
 class Formatter:
     def code2capita(self, code):
-        m = re.match(r'(\S{2})\.(\d{6})', code)
+        m = re.match(r'(\S{2})\.(\d{4,6})', code)
         if m:
             return (m.group(1)+m.group(2)).upper()
         else:
@@ -11,7 +11,7 @@ class Formatter:
             return code
 
     def code2nopoint(self, code):
-        m = re.match(r'(\S{2})\.(\d{6})', code)
+        m = re.match(r'(\S{2})\.(\d{4,6})', code)
         if m:
             return m.group(1)+m.group(2)
         else:
@@ -19,7 +19,7 @@ class Formatter:
             return code
 
     def code2code_without_char(self, code):
-        m = re.match(r'(\S{2})\.(\d{6})', code)
+        m = re.match(r'(\S{2})\.(\d{4,6})', code)
         if m:
             return m.group(2)
         else:
