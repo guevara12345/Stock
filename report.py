@@ -270,6 +270,6 @@ class EtfIndexReporter:
 eir = EtfIndexReporter()
 sr = StockReporter()
 if __name__ == '__main__':
-    # sr.generate_report()
+    sr.generate_report()
     eir.generate_etf_index_report()
     # sr.debug_stock('sh.603288')
