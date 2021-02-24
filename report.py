@@ -36,7 +36,7 @@ class StockReporter:
         zz500_df = self.apply_strategy4stocks(zz500_df)
         return zz500_df
 
-    def generate_report(self):
+    def generate_zz800_report(self):
         zz500_df = self.apply_strategy4zz500()
         time_str = datetime.now().strftime('%H%M%S')
         self.save2file(f'daily_zz500_{time_str}', zz500_df)
@@ -47,8 +47,10 @@ class StockReporter:
             f'daily_hs300zz500_{time_str}',
             pd.concat([hs300_df, zz500_df]))
 
+    def generate_watching_report(self):
         watching_df = self.apply_strategy4watching()
-        self.save2file(f'daily_holding_{time_str}', watching_df)
+        self.save2file('daily_holding_{}'.format(
+            datetime.now().strftime('%H%M%S')), watching_df)
 
     def apply_strategy4watching(self):
         print('start generate watching stocks report')
@@ -136,12 +138,12 @@ class StockReporter:
         worksheet = writer.sheets['Sheet1']
 
         # Add some cell formats.
-        # format1 = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+        format1 = workbook.add_format({'num_format': '0.00'})
         format2 = workbook.add_format({'num_format': '0.00%'})
-        # row_format = workbook.add_format({'bg_color': 'green'})
 
         worksheet.set_column('F:J', None, format2)
         worksheet.set_column('L:M', None, format2)
+        worksheet.set_column('N:Q', None, format1)
         worksheet.set_column('R:V', None, format2)
         color_format = {'type': 'data_bar',
                         'bar_solid': True, 'bar_color': '#4169E1', }
@@ -278,6 +280,7 @@ class EtfIndexReporter:
 eir = EtfIndexReporter()
 sr = StockReporter()
 if __name__ == '__main__':
-    sr.generate_report()
+    # sr.generate_zz800_report()
+    sr.generate_watching_report()
     eir.generate_etf_index_report()
     # sr.debug_stock('sh.603288')

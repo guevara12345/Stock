@@ -1,10 +1,28 @@
 {
     "watching_stocks": [
         {
+            "code": "sh.600258",
+            "code_name": "首旅酒店",
+            "add_date": "2021-02-24",
+            "add_reason": ""
+        },
+        {
+            "code": "sh.600754",
+            "code_name": "锦江酒店",
+            "add_date": "2021-02-21",
+            "add_reason": "旅游业恢复"
+        },
+        {
             "code": "sz.000100",
             "code_name": "TCL科技",
             "add_date": "2021-02-21",
             "add_reason": ""
+        },
+        {
+            "code": "sh.603885",
+            "code_name": "吉祥航空",
+            "add_date": "2021-02-21",
+            "add_reason": "旅游业恢复"
         },
         {
             "code": "sh.601021",
@@ -85,12 +103,6 @@
             "add_reason": "旅游业恢复"
         },
         {
-            "code": "sz.000333",
-            "code_name": "美的集团",
-            "add_date": "2021-02-15",
-            "add_reason": "出口"
-        },
-        {
             "code": "sh.603678",
             "code_name": "火炬电子",
             "add_date": "2021-02-15",
@@ -115,12 +127,6 @@
             "add_reason": "油价上涨"
         },
         {
-            "code": "sh.603993",
-            "code_name": "洛阳钼业",
-            "add_date": "2021-02-15",
-            "add_reason": ""
-        },
-        {
             "code": "sz.000488",
             "code_name": "晨鸣纸业",
             "add_date": "2021-02-15",
@@ -133,12 +139,6 @@
             "add_reason": ""
         },
         {
-            "code": "sh.603087",
-            "code_name": "甘李药业",
-            "add_date": "2021-02-15",
-            "add_reason": ""
-        },
-        {
             "code": "sh.601899",
             "code_name": "紫金矿业",
             "add_date": "2021-02-15",
@@ -147,12 +147,6 @@
         {
             "code": "sh.600438",
             "code_name": "通威股份",
-            "add_date": "2021-02-15",
-            "add_reason": ""
-        },
-        {
-            "code": "sz.002594",
-            "code_name": "比亚迪",
             "add_date": "2021-02-15",
             "add_reason": ""
         },
@@ -193,12 +187,6 @@
             "add_reason": ""
         },
         {
-            "code": "sh.688981",
-            "code_name": "中芯国际-U",
-            "add_date": "2021-02-15",
-            "add_reason": ""
-        },
-        {
             "code": "sz.000725",
             "code_name": "京东方A",
             "add_date": "2021-02-15",
@@ -207,12 +195,6 @@
         {
             "code": "sz.002475",
             "code_name": "立讯精密",
-            "add_date": "2021-02-15",
-            "add_reason": ""
-        },
-        {
-            "code": "sz.300760",
-            "code_name": "迈瑞医疗",
             "add_date": "2021-02-15",
             "add_reason": ""
         }
