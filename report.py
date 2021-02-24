@@ -88,10 +88,10 @@ class StockReporter:
             df.loc[code, 'price'] = sorted_df.iloc[0]['close']
             df.loc[code, 'chg_rate'] = sorted_df.iloc[0]['percent']/100
 
-            stock_info = xueqiu_d.download_stock_detail(code)
-            df.loc[code, 'cap'] = stock_info['market_value']//100000000
-            df.loc[code, 'f_cap'] = stock_info['float_market_capital']//100000000
-            df.loc[code, 'vol_ratio'] = stock_info['vol_ratio']
+            detail = xueqiu_d.download_stock_detail(code)
+            df.loc[code, 'cap'] = detail['market_value']
+            df.loc[code, 'f_cap'] = detail['float_market_capital']
+            df.loc[code, 'vol_ratio'] = detail['vol_ratio']
 
             volatility_info = indi.count_volatility(
                 stock_df[['close', 'high', 'low']])
@@ -99,7 +99,7 @@ class StockReporter:
             df.loc[code, 'unit4me'] = volatility_info['unit4me']
 
             hk_info = indi.count_hk_holding_rate(stock_df)
-            if hk_info is not None:
+            if hk_info:
                 df.loc[code, 'hk_ratio'] = hk_info['hk_ratio']/100
                 df.loc[code, 'hk-ma(hk,10)'] = hk_info['hk-ma(hk,10)']/100
                 df.loc[code, 'hk-ma(hk,30)'] = hk_info['hk-ma(hk,30)']/100
@@ -193,9 +193,9 @@ class EtfIndexReporter:
         if stock['data_source'] == 'xueqiu':
             result['url'] = 'https://xueqiu.com/S/{}'.format(
                 code_formatter.code2capita(stock['code']))
-            stock_info = xueqiu_d.download_stock_detail(result['code'])
-            result['is_open'] = stock_info['is_open']
-            result['vol_ratio'] = stock_info['vol_ratio']
+            detail = xueqiu_d.download_stock_detail(result['code'])
+            result['is_open'] = detail['is_open']
+            result['vol_ratio'] = detail['vol_ratio']
             df_sorted = df.sort_index(ascending=False)
             result['close'] = df_sorted.iloc[0]['close']
 
@@ -227,9 +227,9 @@ class EtfIndexReporter:
         df = pd.DataFrame(columns=i['series'].index)
         for i in watch_dict:
             if i['data_source'] == 'xueqiu':
-                df[stock['code']] = i['df']['close']
+                df[i['code']] = i['df']['close']
             elif i['data_source'] == 'wallstreetcn':
-                
+                df[i['code']] = i['df']['close_px']
 
     def save2file(self, filename, df: pd.DataFrame):
         folder_name = datetime.now().strftime('%Y%b%d')

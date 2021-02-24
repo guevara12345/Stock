@@ -30,118 +30,82 @@ class StockProfit:
         # profit_df = profit_hs300_df
         time_str = datetime.now().strftime('%H%M%S')
         self.save2file(f'financial_hs300zz500_{time_str}', profit_df)
-        self.save2file(f'financial_hs300_{time_str}', profit_hs300_df)
-        self.save2file(f'financial_zz500_{time_str}', profit_zz500_df)
+        # self.save2file(f'financial_hs300_{time_str}', profit_hs300_df)
+        # self.save2file(f'financial_zz500_{time_str}', profit_zz500_df)
 
     def get_stock_profit_data(self, df_stocks):
         for code in df_stocks.index.tolist():
             print(f'get profit info of {code}')
             capital_code = code_formatter.code2capita(code)
 
-            market_capital_info = xueqiu_d.download_stock_detail(
-                code)
-            df_stocks.loc[code,
-                          'm_cap'] = market_capital_info['market_value']//100000000
-            df_stocks.loc[code,
-                          'f_cap'] = market_capital_info['float_market_capital']//100000000
-            df_stocks.loc[code, 'pe_ttm'] = market_capital_info['pe_ttm']
-            df_stocks.loc[code, 'pb'] = market_capital_info['pb']
-            df_stocks.loc[code, 'eps'] = market_capital_info['eps']
-            if df_stocks.loc[code, 'pb'] is not None and df_stocks.loc[code, 'pe_ttm'] is not None:
-                df_stocks.loc[code, 'roe_ttm'] = df_stocks.loc[code, 'pb'] / \
-                    df_stocks.loc[code, 'pe_ttm']
-            df_stocks.loc[code, 'price'] = market_capital_info['price']
-            df_stocks.loc[code, 'roe'] = market_capital_info['roe']
+            detail = xueqiu_d.download_stock_detail(code)
+            df_stocks.loc[code, 'm_cap'] = detail['market_value']
+            df_stocks.loc[code, 'f_cap'] = detail['float_market_capital']
+            df_stocks.loc[code, 'pe_ttm'] = detail['pe_ttm']
+            df_stocks.loc[code, 'pb'] = detail['pb']
+            df_stocks.loc[code, 'eps'] = detail['eps']
+            if detail['pb'] and detail['pe_ttm']:
+                df_stocks.loc[code, 'roe_ttm'] = detail['pb']/detail['pe_ttm']
+            df_stocks.loc[code, 'price'] = detail['price']
+            df_stocks.loc[code, 'roe'] = detail['roe']
 
-            report_info = dongcai_d.get_report(code)
-            df_stocks.loc[code, 'r_date'] = pd.to_datetime(report_info['date'])
-            if report_info['eps'] is not None:
-                df_stocks.loc[code, 'r_eps'] = float(report_info['eps'])
-            if report_info['kf_eps'] is not None:
-                df_stocks.loc[code, 'r_kf_eps'] = float(report_info['kf_eps'])
-            if report_info['profit_yoy'] is not None:
-                df_stocks.loc[code, 'r_pro_yoy'] = float(
-                    report_info['profit_yoy'])/100
-            if report_info['revenue_yoy'] is not None:
-                df_stocks.loc[code, 'r_rev_yoy'] = float(
-                    report_info['revenue_yoy'])/100
+            report = dongcai_d.get_report(code)
+            df_stocks.loc[code, 'r_date'] = pd.to_datetime(report['date'])
+            df_stocks.loc[code, 'r_eps'] = report['eps']
+            df_stocks.loc[code, 'r_kf_eps'] = report['kf_eps']
+            df_stocks.loc[code, 'r_proyoy'] = report['profit_yoy']
+            df_stocks.loc[code, 'r_revyoy'] = report['revenue_yoy']
 
-            broker_predict = dongcai_d.get_broker_predict(code)
-            if broker_predict['rate'] is not None:
-                df_stocks.loc[code, 'rating'] = float(broker_predict['rate'])
-            if broker_predict['thisyear'] is not None:
-                df_stocks.loc[code, 'p_year'] = broker_predict['thisyear']
-            if broker_predict['roe_list'][0] is not None:
-                df_stocks.loc[code,
-                              'roe-1'] = broker_predict['roe_list'][0]/100
-            if broker_predict['roe_list'][1] is not None:
-                df_stocks.loc[code,
-                              'p_roe'] = broker_predict['roe_list'][1]/100
-            if broker_predict['roe_list'][2] is not None:
-                df_stocks.loc[code,
-                              'p_roe+1'] = broker_predict['roe_list'][2]/100
-            if broker_predict['pro_ratio_list'][0] is not None:
-                df_stocks.loc[code,
-                              'pro-1'] = broker_predict['pro_ratio_list'][0]/100
-            if broker_predict['pro_ratio_list'][1] is not None:
-                df_stocks.loc[code,
-                              'p_pro'] = broker_predict['pro_ratio_list'][1]/100
-            if broker_predict['pro_ratio_list'][2] is not None:
-                df_stocks.loc[code,
-                              'p_pro+1'] = broker_predict['pro_ratio_list'][2]/100
+            predict = dongcai_d.get_broker_predict(code)
+            df_stocks.loc[code, 'rating'] = float(predict['rate'])
+            df_stocks.loc[code, 'p_year'] = predict['thisyear']
+            df_stocks.loc[code, 'roe-1'] = predict['roe_list'][0]
+            df_stocks.loc[code, 'p_roe'] = predict['roe_list'][1]
+            df_stocks.loc[code, 'p_roe+1'] = predict['roe_list'][2]
+            df_stocks.loc[code, 'pro-1'] = predict['pro_list'][0]
+            if predict['pro_list'][1] and predict['pro_list'][0]:
+                df_stocks.loc[code, 'p_proyoy'] = (
+                    predict['pro_list'][1]-predict['pro_list'][0])/abs(
+                        predict['pro_list'][0])
+            df_stocks.loc[code, 'p_pro'] = predict['pro_list'][1]
+            df_stocks.loc[code, 'p_pro+1'] = predict['pro_list'][2]
+            if predict['pro_grow_ratio'] and detail['pe_ttm'] and detail['pe_ttm'] > 0:
+                df_stocks.loc[code, 'peg'] = detail['pe_ttm'] / \
+                    predict['pro_grow_ratio']
+            # if predict[2] is not None:
+            #     df_stocks.loc[code,'year2'] = predict[2,'year']
+            #     df_stocks.loc[code,'eps2'] = float(predict[2,'value'])
+            #     df_stocks.loc[code,'ratio2'] = float(predict[2,'ratio'])
 
-            if broker_predict['pro_grow_ratio'] is not None and broker_predict['pro_grow_ratio'] >= 0:
-                if df_stocks.loc[code, 'pe_ttm'] is not None and df_stocks.loc[code, 'pe_ttm'] > 0:
-                    df_stocks.loc[code, 'peg'] = df_stocks.loc[code, 'pe_ttm'] / \
-                        broker_predict['pro_grow_ratio']
-            # if broker_predict[2] is not None:
-            #     df_stocks.loc[code,'year2'] = broker_predict[2,'year']
-            #     df_stocks.loc[code,'eps2'] = float(broker_predict[2,'value'])
-            #     df_stocks.loc[code,'ratio2'] = float(broker_predict[2,'ratio'])
+            adv = dongcai_d.get_advance_report(
+                code, datetime.fromisoformat(report['date']))
+            if adv:
+                df_stocks.loc[code, 'adv_date'] = pd.to_datetime(
+                    adv['release_date'])
+                df_stocks.loc[code, 'adv_rdate'] = pd.to_datetime(
+                    adv['report_date'])
+                df_stocks.loc[code, 'adv_type'] = adv['predict_type']
+                df_stocks.loc[code, 'adv_proyoy'] = adv['increase']
 
-            predict_info = dongcai_d.get_predict_profit(
-                code, datetime.fromisoformat(report_info['date']))
+            expr = dongcai_d.get_express_profit(
+                code, datetime.fromisoformat(report['date']))
+            if expr:
+                df_stocks.loc[code, 'adv_date'] = pd.to_datetime(
+                    expr['release_date'])
+                df_stocks.loc[code, 'adv_rdate'] = pd.to_datetime(
+                    expr['report_date'])
+                df_stocks.loc[code, 'adv_proyoy'] = expr['profit_yoy']
 
-            if predict_info:
-                df_stocks.loc[code, 'predict_date'] = pd.to_datetime(
-                    predict_info['release_date'])
-                df_stocks.loc[code, 'pre_r_date'] = pd.to_datetime(
-                    predict_info['report_date'])
-                df_stocks.loc[code, 'pre_type'] = predict_info['predict_type']
-                if predict_info['increase'] is not None:
-                    df_stocks.loc[code,
-                                  'pre_pro+'] = predict_info['increase']/100
-
-            express_info = dongcai_d.get_express_profit(
-                code, datetime.fromisoformat(report_info['date']))
-            if express_info:
-                df_stocks.loc[code, 'predict_date'] = pd.to_datetime(
-                    express_info['release_date'])
-                df_stocks.loc[code, 'pre_r_date'] = pd.to_datetime(
-                    express_info['report_date'])
-                # if express_info[2] is not None:
-                #     df_stocks.loc[code,'express_rev_yoy'] = express_info[2]/100
-                # if express_info[3] is not None:
-                #     df_stocks.loc[code,'express_rev_qoq'] = express_info[3]/100
-                if express_info['profit_yoy'] is not None:
-                    df_stocks.loc[code,
-                                  'pre_pro+'] = express_info['profit_yoy']/100
-                # if express_info[5] is not None:
-                #     df_stocks.loc[code,'express_pro_qoq'] = express_info[5]/100
             df_stocks.loc[code, 'industry'] = df_stocks.loc[code, 'industry']
             df_stocks.loc[code,
                           'url'] = f'http://emweb.securities.eastmoney.com/NewFinanceAnalysis/Index?type=web&code={capital_code}'
 
-            fund_holding_info = dongcai_d.get_fund_holding(code)
-            if fund_holding_info['last_quarter'] != 0:
-                df_stocks.loc[code,
-                              'f_hold'] = fund_holding_info['last_quarter']
-            if fund_holding_info['last_2quarter'] != 0:
-                df_stocks.loc[code,
-                              'f_last'] = fund_holding_info['last_2quarter']
-            if fund_holding_info['last_quarter'] != 0 and fund_holding_info['last_2quarter'] != 0:
-                df_stocks.loc[code, 'f_chg'] = fund_holding_info['last_quarter'] - \
-                    fund_holding_info['last_2quarter']
+            fund_hold = dongcai_d.get_fund_holding(code)
+            df_stocks.loc[code, 'f_hold'] = fund_hold['last_quarter']
+            df_stocks.loc[code, 'f_last'] = fund_hold['last_2quarter']
+            if fund_hold['last_quarter'] and fund_hold['last_2quarter']:
+                df_stocks.loc[code, 'f_chg'] = fund_hold['last_quarter'] - \
+                    fund_hold['last_2quarter']
 
         return df_stocks
 
@@ -153,9 +117,9 @@ class StockProfit:
         df = df[['code_name', 'industry', 'pe_ttm', 'pb', 'eps', 'peg', 'price',
                  'm_cap', 'f_cap', 'f_hold', 'f_last', 'f_chg',
                  'rating', 'r_date', 'p_year',
-                 'pro-1', 'r_pro_yoy', 'r_rev_yoy','p_pro', 'p_pro+1', 
-                 'roe-1', 'roe_ttm', 'p_roe', 'p_roe+1',
-                 'predict_date', 'pre_r_date', 'pre_type', 'pre_pro+', 'url']]
+                 'r_proyoy', 'p_proyoy', 'adv_proyoy', 'r_revyoy',
+                 'pro-1', 'p_pro', 'p_pro+1', 'roe-1', 'roe_ttm', 'p_roe', 'p_roe+1',
+                 'adv_date', 'adv_rdate', 'adv_type',  'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
@@ -178,10 +142,11 @@ class StockProfit:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('D:H', None, format1)
+            worksheet.set_column('D:J', None, format1)
             worksheet.set_column('K:M', None, format2)
-            worksheet.set_column('Q:Y', None, format2)
-            worksheet.set_column('AC:AC', None, format2)
+            worksheet.set_column('Q:T', None, format2)
+            worksheet.set_column('U:W', None, format1)
+            worksheet.set_column('X:AA', None, format2)
 
             # worksheet.set_row(0, None, row_format)
 
