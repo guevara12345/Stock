@@ -18,58 +18,48 @@ class StockReporter:
         stock_df = pd.DataFrame(index=[code, ])
         stock_df = self.apply_strategy4stocks(stock_df)
 
-    def apply_strategy4hs300(self):
-        print('start generate hs300 report')
+    def generate_zz800_report(self):
+        time_str = datetime.now().strftime('%H%M%S')
+        stock_df = self.preprocess4stock()
+        stock_df = self.apply_strategy4stocks(stock_df)
+        self.save2file(f'zz800_{time_str}', stock_df)
+
+    def generate_watching_report(self):
+        watching_df = self.preprocess4watching()
+        watching_df = self.apply_strategy4stocks(watching_df)
+        self.save2file4watching('holding_{}'.format(
+            datetime.now().strftime('%H%M%S')), watching_df)
+
+    def preprocess4stock(self):
         hs300_df = pd.read_csv(os.path.join(
             os.getcwd(), 'raw_data/hs300_stocks.csv'), index_col=1, encoding="gbk")
         hs300_df = hs300_df.set_index("code")
+        hs300_df['belong'] = 'hs300'
 
-        hs300_df = self.apply_strategy4stocks(hs300_df)
-        return hs300_df
-
-    def apply_strategy4zz500(self):
-        print('start generate zz500 report')
         zz500_df = pd.read_csv(os.path.join(
             os.getcwd(), 'raw_data/zz500_stocks.csv'), index_col=1, encoding="gbk")
         zz500_df = zz500_df.set_index("code")
+        zz500_df['belong'] = 'zz500'
+        return pd.concat([hs300_df, zz500_df])
+        # return hs300_df
 
-        zz500_df = self.apply_strategy4stocks(zz500_df)
-        return zz500_df
-
-    def generate_zz800_report(self):
-        zz500_df = self.apply_strategy4zz500()
-        time_str = datetime.now().strftime('%H%M%S')
-        self.save2file(f'daily_zz500_{time_str}', zz500_df)
-
-        hs300_df = self.apply_strategy4hs300()
-        self.save2file(f'daily_hs300_{time_str}', hs300_df)
-        self.save2file(
-            f'daily_hs300zz500_{time_str}',
-            pd.concat([hs300_df, zz500_df]))
-
-    def generate_watching_report(self):
-        watching_df = self.apply_strategy4watching()
-        self.save2file('daily_holding_{}'.format(
-            datetime.now().strftime('%H%M%S')), watching_df)
-
-    def apply_strategy4watching(self):
+    def preprocess4watching(self):
         print('start generate watching stocks report')
-        watching_df = None
         no_dup_dict = {}
         for x in config.watching_stocks:
             no_dup_dict[x['code']] = x
-        for stock in no_dup_dict.values():
-            if watching_df is None:
-                watching_df = pd.DataFrame()
-            series = pd.Series(stock)
+        stock_df = self.preprocess4stock()
+        watching_df = pd.DataFrame()
+        for i in no_dup_dict.values():
+            series = pd.Series(i)
             series['url'] = 'https://xueqiu.com/S/{}'.format(
-                code_formatter.code2capita(stock['code']))
-            series['industry'] = basic.get_industry(stock['code'])
+                code_formatter.code2capita(i['code']))
+            if i['code'] in stock_df.index:
+                series['industry'] = stock_df.loc[i['code'], 'industry']
+            series['hold'] = 'Y' if i.get('holding') else None
+            series['chg_date'] = datetime.fromisoformat(i['chg_date'])
             watching_df = watching_df.append(series, ignore_index=True)
-
-        watching_df = watching_df.reset_index(drop=True).set_index('code')
-        watching_df = self.apply_strategy4stocks(watching_df)
-        return watching_df
+        return watching_df.reset_index(drop=True).set_index('code')
 
     def apply_strategy4stocks(self, df):
         for code in df.index.values.tolist():
@@ -114,6 +104,11 @@ class StockReporter:
 
             vol_info = indi.count_quantity_ratio(stock_df)
             df.loc[code, 'turnover'] = vol_info['turnover']/100
+
+            if 'hold' in df.columns:
+                chg = indi.count_chg_since(
+                    df.loc[code, 'chg_date'], stock_df['percent'])
+                df.loc[code, 'since_chg'] = chg
         return df
 
     def save2file(self, filename, df: pd.DataFrame):
@@ -125,7 +120,7 @@ class StockReporter:
                  'dif/p', 'macd/p', 'macd_chg/p',
                  'turnover', 'vol_ratio', 'atr/p', 'unit4me',
                  'cap', 'f_cap',  'pe', 'pb', 'roe_ttm', 'pe_percent', 'pb_percent',
-                 'hk_ratio', 'hk-ma(hk,10)', 'url']]
+                 'hk_ratio', 'hk-ma(hk,10)', 'belong', 'url']]
         writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                                 datetime_format='yyyy-mm-dd',
                                 engine='xlsxwriter',
@@ -166,6 +161,63 @@ class StockReporter:
         # Close the Pandas Excel writer and output the Excel file.
         writer.save()
 
+    def save2file4watching(self, filename, df: pd.DataFrame):
+        folder_name = datetime.now().strftime('%Y%b%d')
+        if not os.path.exists(f'./raw_data/{folder_name}'):
+            os.mkdir(f'./raw_data/{folder_name}')
+
+        df = df[['code_name', 'industry', 'highest', 'price', 'chg_rate',
+                 'dif/p', 'macd/p', 'macd_chg/p',
+                 'hold', 'chg_date', 'since_chg',
+                 'atr/p', 'unit4me', 'turnover', 'vol_ratio',
+                 'cap', 'f_cap',  'pe', 'pb', 'roe_ttm', 'pe_percent', 'pb_percent',
+                 'hk_ratio', 'hk-ma(hk,10)', 'url']]
+        writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
+                                datetime_format='yyyy-mm-dd',
+                                engine='xlsxwriter',
+                                options={'remove_timezone': True})
+        # Convert the dataframe to an XlsxWriter Excel object.
+        df.to_excel(writer, encoding="gbk", sheet_name='Sheet1')
+
+        # Get the xlsxwriter workbook and worksheet objects.
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+
+        # Add some cell formats.
+        format1 = workbook.add_format({'num_format': '0.00'})
+        format2 = workbook.add_format({'num_format': '0.00%'})
+
+        worksheet.set_column('F:I', None, format2)
+        worksheet.set_column('L:P', None, format2)
+        worksheet.set_column('Q:T', None, format1)
+        worksheet.set_column('U:Y', None, format2)
+
+        color_format = {'type': 'data_bar',
+                        'bar_solid': True, 'bar_color': '#4169E1', }
+        worksheet.conditional_format('F1:F801', color_format)
+        worksheet.conditional_format('G1:G801', color_format)
+        worksheet.conditional_format('H1:H801', color_format)
+        worksheet.conditional_format('I1:I801', color_format)
+        worksheet.conditional_format('M1:M801', color_format)
+        worksheet.conditional_format('N1:N801', color_format)
+        worksheet.conditional_format('U1:U801', color_format)
+        worksheet.conditional_format('V1:V801', color_format)
+        worksheet.conditional_format('X1:X801', color_format)
+        worksheet.conditional_format('Y1:Y801', color_format)
+
+        format3 = workbook.add_format({'bg_color': '#4169E1', })
+        worksheet.conditional_format(
+            'J1:J801', {'type': 'cell', 'criteria': 'equal to',
+                        'value': '"Y"', 'format': format3})
+
+        # worksheet.set_row(0, None, row_format)
+
+        # Freeze the first row.
+        worksheet.freeze_panes(1, 3)
+
+        # Close the Pandas Excel writer and output the Excel file.
+        writer.save()
+
 
 class EtfIndexReporter:
     def generate_etf_index_report(self):
@@ -186,7 +238,7 @@ class EtfIndexReporter:
             etf_index_df = etf_index_df.append(i['series'], ignore_index=True)
         etf_index_df = etf_index_df.reset_index(drop=True).set_index('code')
         time_str = datetime.now().strftime('%H%M%S')
-        self.save2file(f'daily_etf_index_{time_str}', etf_index_df)
+        self.save2file(f'etf_index_{time_str}', etf_index_df)
 
     def apply_strategy(self, stock):
         df = stock['df']
@@ -282,5 +334,5 @@ sr = StockReporter()
 if __name__ == '__main__':
     # sr.generate_zz800_report()
     sr.generate_watching_report()
-    eir.generate_etf_index_report()
+    # eir.generate_etf_index_report()
     # sr.debug_stock('sh.603288')

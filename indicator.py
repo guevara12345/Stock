@@ -98,5 +98,9 @@ class Indicator:
             'pe_percent': year_df.iloc[0]['pe_percent'],
             'pb_percent': year_df.iloc[0]['pb_percent']}
 
+    def count_chg_since(self, date, series):
+        series = series[series.index > date]
+        return series.sum()/100
+
 
 indi = Indicator()
