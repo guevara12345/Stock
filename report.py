@@ -223,9 +223,9 @@ class EtfIndexReporter:
 
         return result
 
-    def corr(self, watch_data_dict):
+    def corr(self, watch_dict):
         df = pd.DataFrame(columns=i['series'].index)
-        for i in watch_data_dict:
+        for i in watch_dict:
             if i['data_source'] == 'xueqiu':
                 df[stock['code']] = i['df']['close']
             elif i['data_source'] == 'wallstreetcn':
