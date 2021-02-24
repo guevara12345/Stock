@@ -29,7 +29,7 @@ class StockProfit:
 
         # profit_df = profit_hs300_df
         time_str = datetime.now().strftime('%H%M%S')
-        self.save2file(f'financial_hs300zz500_{time_str}', profit_df)
+        self.save2file(f'financial_zz800_{time_str}', profit_df)
         # self.save2file(f'financial_hs300_{time_str}', profit_hs300_df)
         # self.save2file(f'financial_zz500_{time_str}', profit_zz500_df)
 
