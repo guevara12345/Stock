@@ -207,12 +207,12 @@
     "wangtching_etf_index": [
         {
             "code": "CN10YR.OTC",
-            "code_name": "中国10年期国债收益率",
+            "code_name": "CN10YR Treasury",
             "data_source": "wallstreetcn"
         },
         {
             "code": "US10YR.OTC",
-            "code_name": "美国10年期国债收益率",
+            "code_name": "US10YR Treasury",
             "data_source": "wallstreetcn"
         },
         {
@@ -247,17 +247,17 @@
         },
         {
             "code": "BTCUSD.Bitfinex",
-            "code_name": "比特币/美元",
+            "code_name": "BTC/USD",
             "data_source": "wallstreetcn"
         },
         {
             "code": ".INX",
-            "code_name": "标普500指数",
+            "code_name": "SP500",
             "data_source": "xueqiu"
         },
         {
             "code": ".IXIC",
-            "code_name": "纳斯达克综合指数",
+            "code_name": "Nasdaq",
             "data_source": "xueqiu"
         },
         {
@@ -301,8 +301,8 @@
             "data_source": "xueqiu"
         },
         {
-            "code": "sh.515790",
-            "code_name": "光伏ETF",
+            "code": "sh.601012",
+            "code_name": "隆基股份",
             "data_source": "xueqiu"
         },
         {

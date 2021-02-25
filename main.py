@@ -10,7 +10,8 @@ if __name__ == '__main__':
     # sr.generate_zz800_report()
     # profit.generate_report()
 
-    sr.generate_watching_report()
+    # sr.generate_watching_report()
+    
     eir.generate_etf_index_report()
 
 

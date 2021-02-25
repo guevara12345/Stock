@@ -1,15 +1,23 @@
 import baostock as bs
 import pandas as pd
+from pandas.tseries.offsets import *
 import os
 from datetime import datetime, timedelta
 import time
 import xlsxwriter
+import matplotlib.pyplot as plt  # 可视化
+import seaborn as sns  # 可视化
 
 from downloader import bao_d, xueqiu_d, wall_d
 from basic_stock_data import basic
 from code_formmat import code_formatter
 from indicator import indi
 from get_config import config
+
+
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 中文字体设置-黑体
+plt.rcParams['axes.unicode_minus'] = False  # 解决保存图像是负号'-'显示为方块的问题
+sns.set(font='SimHei')  # 解决Seaborn中文显示问题
 
 
 class StockReporter:
@@ -223,8 +231,16 @@ class StockReporter:
 class EtfIndexReporter:
     def generate_etf_index_report(self):
         print('start generate etf_index report')
-        watch_data_dict = config.wangtching_etf_index
-        etf_index_df = None
+        watch_data_dict = self.preprocess4watching(config.wangtching_etf_index)
+        etf_index_df = pd.DataFrame()
+        for i in watch_data_dict:
+            self.apply_strategy(i)
+            etf_index_df = etf_index_df.append(i['series'], ignore_index=True)
+        etf_index_df = etf_index_df.reset_index(drop=True).set_index('code')
+        time_str = datetime.now().strftime('%H%M%S')
+        self.save2file(f'etf_index_{time_str}', etf_index_df)
+
+    def preprocess4watching(self, watch_data_dict):
         for i in watch_data_dict:
             i['series'] = pd.Series(i)
             if i['data_source'] == 'xueqiu':
@@ -232,14 +248,7 @@ class EtfIndexReporter:
                     i['code'], 52*5)
             elif i['data_source'] == 'wallstreetcn':
                 i['df'] = wall_d.download_dkline4daily(i['code'], 52*5)
-
-            self.apply_strategy(i)
-            if etf_index_df is None:
-                etf_index_df = pd.DataFrame(columns=i['series'].index)
-            etf_index_df = etf_index_df.append(i['series'], ignore_index=True)
-        etf_index_df = etf_index_df.reset_index(drop=True).set_index('code')
-        time_str = datetime.now().strftime('%H%M%S')
-        self.save2file(f'etf_index_{time_str}', etf_index_df)
+        return watch_data_dict
 
     def apply_strategy(self, stock):
         df = stock['df']
@@ -278,13 +287,47 @@ class EtfIndexReporter:
 
         return result
 
-    def corr(self, watch_dict):
-        df = pd.DataFrame(columns=i['series'].index)
-        for i in watch_dict:
+    def corr(self):
+        def f(x):
+            new_time = x['datetime'] - x['datetime'].hour*Hour()
+            return pd.Series([new_time, x['percent']], index=['datetime', 'percent'])
+        watch_list = self.preprocess4watching(config.wangtching_etf_index)
+        df = pd.DataFrame()
+        for i in watch_list:
             if i['data_source'] == 'xueqiu':
-                df[i['code']] = i['df']['close']
+                chg = i['df']['percent']
+                if chg.index[0].hour != 0:
+                    chg_df = chg.reset_index()
+                    chg_df = chg_df.apply(f, axis=1, result_type='expand')
+                    chg_df = chg_df.reset_index(
+                        drop=True).set_index('datetime')
+                    df[i['code_name']] = chg_df['percent']
+                else:
+                    df[i['code_name']] = chg
             elif i['data_source'] == 'wallstreetcn':
-                df[i['code']] = i['df']['close_px']
+                df[i['code_name']] = i['df']['px_change_rate']
+        # df = df[["CN10YR Treasury", "US10YR Treasury", "美元指数", "离岸人民币", "WTI原油",
+        #          "纽约金", "纽约银", "纽约铜", "BTC/USD", "SP500",
+        #          "Nasdaq", "恒生指数", "上证指数", "上证50", "沪深300",
+        #          "中证500", "创业板50", "科创50", ]]
+        df = df[["上证指数", "上证50", "沪深300", "中证500", "创业板50",
+                 "科创50", "证券ETF", "隆基股份", "军工ETF", "芯片ETF",
+                 "有色金属ETF", "新能源车ETF", "银行ETF", "5GETF", "酒ETF",
+                 "农业ETF", "中概互联网ETF", "医疗ETF", "医药ETF", "煤炭ETF",
+                 "钢铁ETF", "计算机ETF", "房地产ETF", ]]
+        df = df.sort_index(ascending=False)[0:52*5-1]
+        corr = df.corr(method='pearson')
+        _, ax = plt.subplots(figsize=(12, 10))  # 分辨率1200×1000
+        _ = sns.heatmap(corr,  # 使用Pandas DataFrame数据，索引/列信息用于标记列和行F
+                        cmap="RdBu_r",  # 数据值到颜色空间的映射
+                        square=True,  # 每个单元格都是正方形
+                        cbar_kws={'shrink': .9},  # `fig.colorbar`的关键字参数
+                        ax=ax,  # 绘制图的轴
+                        annot=True,  # 在单元格中标注数据值
+                        fmt=".2f",
+                        annot_kws={'fontsize': 'xx-small'})  # 热图，将矩形数据绘制为颜色编码矩阵
+
+        plt.show()
 
     def save2file(self, filename, df: pd.DataFrame):
         folder_name = datetime.now().strftime('%Y%b%d')
@@ -335,5 +378,6 @@ sr = StockReporter()
 if __name__ == '__main__':
     # sr.generate_zz800_report()
     # sr.generate_watching_report()
-    eir.generate_etf_index_report()
+    # eir.generate_etf_index_report()
+    eir.corr()
     # sr.debug_stock('sh.603288')
