@@ -10,7 +10,7 @@
         {
             "code": "sh.600754",
             "code_name": "锦江酒店",
-            "holding": true,
+            "holding": false,
             "chg_date": "2021-02-21",
             "chg_reason": "旅游业恢复"
         },
@@ -78,7 +78,8 @@
         {
             "code": "sh.600584",
             "code_name": "长电科技",
-            "chg_date": "2021-02-24",
+            "holding": true,
+            "chg_date": "2021-03-01",
             "chg_reason": "封测产能紧张"
         },
         {
@@ -301,8 +302,8 @@
             "data_source": "xueqiu"
         },
         {
-            "code": "sh.601012",
-            "code_name": "隆基股份",
+            "code": "sh.515790",
+            "code_name": "光伏ETF",
             "data_source": "xueqiu"
         },
         {

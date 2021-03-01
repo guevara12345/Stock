@@ -306,16 +306,16 @@ class EtfIndexReporter:
                     df[i['code_name']] = chg
             elif i['data_source'] == 'wallstreetcn':
                 df[i['code_name']] = i['df']['px_change_rate']
-        # df = df[["CN10YR Treasury", "US10YR Treasury", "美元指数", "离岸人民币", "WTI原油",
-        #          "纽约金", "纽约银", "纽约铜", "BTC/USD", "SP500",
-        #          "Nasdaq", "恒生指数", "上证指数", "上证50", "沪深300",
-        #          "中证500", "创业板50", "科创50", ]]
-        df = df[["上证指数", "上证50", "沪深300", "中证500", "创业板50",
-                 "科创50", "证券ETF", "隆基股份", "军工ETF", "芯片ETF",
-                 "有色金属ETF", "新能源车ETF", "银行ETF", "5GETF", "酒ETF",
-                 "农业ETF", "中概互联网ETF", "医疗ETF", "医药ETF", "煤炭ETF",
-                 "钢铁ETF", "计算机ETF", "房地产ETF", ]]
-        df = df.sort_index(ascending=False)[0:52*5-1]
+        df = df[["CN10YR Treasury", "US10YR Treasury", "美元指数", "离岸人民币", "WTI原油",
+                 "纽约金", "纽约银", "纽约铜", "BTC/USD", "SP500",
+                 "Nasdaq", "恒生指数", "上证指数", "上证50", "沪深300",
+                 "中证500", "创业板50", "科创50",'贵州茅台' ]]
+        # df = df[["上证指数", "上证50", "沪深300", "中证500", "创业板50",
+        #          "科创50", "证券ETF", "隆基股份", "军工ETF", "芯片ETF",
+        #          "有色金属ETF", "新能源车ETF", "银行ETF", "5GETF", "酒ETF",
+        #          "农业ETF", "中概互联网ETF", "医疗ETF", "医药ETF", "煤炭ETF",
+        #          "钢铁ETF", "计算机ETF", "房地产ETF", ]]
+        df = df.sort_index(ascending=False)[0:26*5-1]
         corr = df.corr(method='pearson')
         _, ax = plt.subplots(figsize=(12, 10))  # 分辨率1200×1000
         _ = sns.heatmap(corr,  # 使用Pandas DataFrame数据，索引/列信息用于标记列和行F
