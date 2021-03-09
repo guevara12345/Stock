@@ -8,7 +8,7 @@ if __name__ == '__main__':
     basic.zz500_index_component()
 
     # sr.generate_zz800_report()
-    profit.generate_report()
+    # profit.generate_report()
 
     sr.generate_watching_report()
     

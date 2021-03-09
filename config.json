@@ -3,18 +3,12 @@
         {
             "code": "sh.600346",
             "code_name": "恒力石化",
-            "chg_date": "2021-03-02",
+            "holding": false,
+            "chg_date": "2021-03-04",
             "chg_reason": ""
-        },
-        {
-            "code": "sh.601865",
-            "code_name": "福莱特",
-            "chg_date": "2021-03-02",
-            "chg_reason": ""
-        },
-        {
-            "code": "sz.002271",
-            "code_name": "东方雨虹",
+        },{
+            "code": "sz.002493",
+            "code_name": "荣盛石化",
             "holding": true,
             "chg_date": "2021-03-02",
             "chg_reason": ""
@@ -22,15 +16,15 @@
         {
             "code": "sh.600258",
             "code_name": "首旅酒店",
-            "holding": true,
-            "chg_date": "2021-02-21",
+            "holding": false,
+            "chg_date": "2021-03-08",
             "chg_reason": ""
         },
         {
             "code": "sh.600754",
             "code_name": "锦江酒店",
             "holding": false,
-            "chg_date": "2021-02-21",
+            "chg_date": "2021-03-01",
             "chg_reason": "旅游业恢复"
         },
         {
@@ -48,8 +42,8 @@
         {
             "code": "sh.601021",
             "code_name": "春秋航空",
-            "holding": true,
-            "chg_date": "2021-02-21",
+            "holding": false,
+            "chg_date": "2021-03-03",
             "chg_reason": "旅游业恢复"
         },
         {
@@ -97,8 +91,8 @@
         {
             "code": "sh.600584",
             "code_name": "长电科技",
-            "holding": true,
-            "chg_date": "2021-03-01",
+            "holding": false,
+            "chg_date": "2021-03-03",
             "chg_reason": "封测产能紧张"
         },
         {
@@ -134,8 +128,8 @@
         {
             "code": "sh.603290",
             "code_name": "斯达半导",
-            "holding": true,
-            "chg_date": "2021-02-15",
+            "holding": false,
+            "chg_date": "2021-03-01",
             "chg_reason": "新能源汽车"
         },
         {
@@ -303,6 +297,11 @@
         {
             "code": "sh.000905",
             "code_name": "中证500",
+            "data_source": "xueqiu"
+        },
+        {
+            "code": "sh.000852",
+            "code_name": "中证1000",
             "data_source": "xueqiu"
         },
         {
