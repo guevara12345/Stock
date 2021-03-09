@@ -24,7 +24,7 @@
             "code": "sh.600754",
             "code_name": "锦江酒店",
             "holding": false,
-            "chg_date": "2021-02-21",
+            "chg_date": "2021-03-01",
             "chg_reason": "旅游业恢复"
         },
         {
@@ -42,8 +42,8 @@
         {
             "code": "sh.601021",
             "code_name": "春秋航空",
-            "holding": true,
-            "chg_date": "2021-02-21",
+            "holding": false,
+            "chg_date": "2021-03-03",
             "chg_reason": "旅游业恢复"
         },
         {
@@ -91,8 +91,8 @@
         {
             "code": "sh.600584",
             "code_name": "长电科技",
-            "holding": true,
-            "chg_date": "2021-03-01",
+            "holding": false,
+            "chg_date": "2021-03-03",
             "chg_reason": "封测产能紧张"
         },
         {
@@ -297,6 +297,11 @@
         {
             "code": "sh.000905",
             "code_name": "中证500",
+            "data_source": "xueqiu"
+        },
+        {
+            "code": "sh.000852",
+            "code_name": "中证1000",
             "data_source": "xueqiu"
         },
         {
