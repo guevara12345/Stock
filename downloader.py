@@ -113,7 +113,8 @@ class XueqiuDownloader:
                 market_capital = detail_json.get('market_capital')/100000000
             float_market_capital = None
             if detail_json.get('float_market_capital'):
-                float_market_capital = detail_json.get('float_market_capital')/100000000
+                float_market_capital = detail_json.get(
+                    'float_market_capital')/100000000
             return {
                 'is_open': 'Y' if market_json.get('status_id') == 5 else 'N',
                 'roe': roe,
@@ -214,8 +215,8 @@ class DongcaiDownloader:
                     'report_date': express['REPORT_DATE'],
                     'revenue': express['YSTZ'],
                     'revenue_qoq': express['DJDYSHZ'],
-                    'profit_yoy': express['JLRTBZCL']/100,
-                    'profit_qoq': express['DJDJLHZ']/100
+                    'profit_yoy': express['JLRTBZCL']/100 if express['JLRTBZCL'] is not None else None,
+                    'profit_qoq': express['DJDJLHZ']/100 if express['DJDJLHZ'] is not None else None,
                 }
 
     def get_fund_holding(self, code):
@@ -308,5 +309,6 @@ if __name__ == '__main__':
     # bao_d.get_from_xls('000300')
     # xueqiu_d.download_dkline('sh.600438', 52*5)
     # dongcai_d.get_fund_holding('sh.600928')
-    dongcai_d.get_broker_predict('sh.600011')
+    # dongcai_d.get_broker_predict('sh.600011')
+    dongcai_d.get_express_profit('sh.600875')
     # wall_d.download_dkline4daily('US10YR.OTC', 52*5)

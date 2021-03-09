@@ -1,6 +1,25 @@
 {
     "watching_stocks": [
         {
+            "code": "sh.600346",
+            "code_name": "恒力石化",
+            "chg_date": "2021-03-02",
+            "chg_reason": ""
+        },
+        {
+            "code": "sh.601865",
+            "code_name": "福莱特",
+            "chg_date": "2021-03-02",
+            "chg_reason": ""
+        },
+        {
+            "code": "sz.002271",
+            "code_name": "东方雨虹",
+            "holding": true,
+            "chg_date": "2021-03-02",
+            "chg_reason": ""
+        },
+        {
             "code": "sh.600258",
             "code_name": "首旅酒店",
             "holding": true,
