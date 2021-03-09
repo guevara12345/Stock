@@ -3,8 +3,8 @@
         {
             "code": "sh.600346",
             "code_name": "恒力石化",
-            "holding": true,
-            "chg_date": "2021-03-02",
+            "holding": false,
+            "chg_date": "2021-03-04",
             "chg_reason": ""
         },{
             "code": "sz.002493",
@@ -16,8 +16,8 @@
         {
             "code": "sh.600258",
             "code_name": "首旅酒店",
-            "holding": true,
-            "chg_date": "2021-02-21",
+            "holding": false,
+            "chg_date": "2021-03-08",
             "chg_reason": ""
         },
         {
@@ -128,8 +128,8 @@
         {
             "code": "sh.603290",
             "code_name": "斯达半导",
-            "holding": true,
-            "chg_date": "2021-02-15",
+            "holding": false,
+            "chg_date": "2021-03-01",
             "chg_reason": "新能源汽车"
         },
         {
