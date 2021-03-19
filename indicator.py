@@ -102,5 +102,8 @@ class Indicator:
         series = series[series.index > date]
         return series.sum()/100
 
+    def cci(self, series):
+        pass
+
 
 indi = Indicator()
