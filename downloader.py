@@ -310,7 +310,7 @@ if __name__ == '__main__':
     # bao_d.get_from_xls('000300')
     # xueqiu_d.download_dkline('sh.600438', 52*5)
     # dongcai_d.get_fund_holding('sh.600928')
-    dongcai_d.get_broker_predict('sh.600011')
+    dongcai_d.get_broker_predict('sh.600004')
     # dongcai_d.get_express_profit('sh.600875')
     # dongcai_d.get_advance_report('sh.600875')
     # wall_d.download_dkline4daily('US10YR.OTC', 52*5)

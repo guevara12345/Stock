@@ -110,7 +110,7 @@ class StockProfit:
         if not os.path.exists(f'./raw_data/{folder_name}'):
             os.mkdir(f'./raw_data/{folder_name}')
 
-        df = df[['code_name', 'industry', 'pe_ttm', 'pb', 'eps', 'peg', 'price',
+        df = df[['code_name', 'industry', 'pe_ttm', 'pb', 'peg', 'price',
                  'm_cap', 'f_cap', 'f_hold', 'f_last', 'f_chg',
                  'rating', 'r_date', 'r_eps', 'r_kf_eps',
                  'p_year', 'eps-1', 'p_eps', 'p_eps+1',
@@ -138,11 +138,11 @@ class StockProfit:
 
             # Set the format but not the column width.
             # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('D:J', None, format1)
-            worksheet.set_column('K:M', None, format2)
-            worksheet.set_column('P:Q', None, format1)
-            worksheet.set_column('S:T', None, format1)
-            worksheet.set_column('V:Y', None, format2)
+            worksheet.set_column('D:I', None, format1)
+            worksheet.set_column('J:L', None, format2)
+            worksheet.set_column('O:P', None, format1)
+            worksheet.set_column('R:T', None, format1)
+            worksheet.set_column('U:X', None, format2)
 
             # worksheet.set_row(0, None, row_format)
 
