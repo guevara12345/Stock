@@ -36,7 +36,8 @@ class StockProfit:
     def get_stock_profit_data(self, df_stocks):
         for code in df_stocks.index.tolist():
             print(f'get profit info of {code}')
-            capital_code = code_formatter.code2capita(code)
+            code2code_without_char = code_formatter.code2code_without_char(
+                code)
 
             detail = xueqiu_d.download_stock_detail(code)
             df_stocks.loc[code, 'm_cap'] = detail['market_value']
@@ -62,13 +63,13 @@ class StockProfit:
             df_stocks.loc[code, 'roe-1'] = predict['roe_list'][0]
             df_stocks.loc[code, 'p_roe'] = predict['roe_list'][1]
             df_stocks.loc[code, 'p_roe+1'] = predict['roe_list'][2]
-            df_stocks.loc[code, 'pro-1'] = predict['pro_list'][0]
-            if predict['pro_list'][1] and predict['pro_list'][0]:
+            df_stocks.loc[code, 'eps-1'] = predict['eps_list'][0]
+            if predict['eps_list'][1] and predict['eps_list'][0]:
                 df_stocks.loc[code, 'p_proyoy'] = (
-                    predict['pro_list'][1]-predict['pro_list'][0])/abs(
-                        predict['pro_list'][0])
-            df_stocks.loc[code, 'p_pro'] = predict['pro_list'][1]
-            df_stocks.loc[code, 'p_pro+1'] = predict['pro_list'][2]
+                    predict['eps_list'][1]-predict['eps_list'][0])/abs(
+                        predict['eps_list'][0])
+            df_stocks.loc[code, 'p_eps'] = predict['eps_list'][1]
+            df_stocks.loc[code, 'p_eps+1'] = predict['eps_list'][2]
             if predict['pro_grow_ratio'] and detail['pe_ttm'] and detail['pe_ttm'] > 0:
                 df_stocks.loc[code, 'peg'] = detail['pe_ttm'] / \
                     predict['pro_grow_ratio']
@@ -80,25 +81,20 @@ class StockProfit:
             adv = dongcai_d.get_advance_report(
                 code, datetime.fromisoformat(report['date']))
             if adv:
-                df_stocks.loc[code, 'adv_date'] = pd.to_datetime(
-                    adv['release_date'])
-                df_stocks.loc[code, 'adv_rdate'] = pd.to_datetime(
-                    adv['report_date'])
-                df_stocks.loc[code, 'adv_type'] = adv['predict_type']
-                df_stocks.loc[code, 'adv_proyoy'] = adv['increase']
+                df_stocks.loc[code, 'is_adv'] = 'Y'
 
             expr = dongcai_d.get_express_profit(
                 code, datetime.fromisoformat(report['date']))
             if expr:
-                df_stocks.loc[code, 'adv_date'] = pd.to_datetime(
+                df_stocks.loc[code, 'expr_date'] = pd.to_datetime(
                     expr['release_date'])
-                df_stocks.loc[code, 'adv_rdate'] = pd.to_datetime(
+                df_stocks.loc[code, 'expr_rdate'] = pd.to_datetime(
                     expr['report_date'])
-                df_stocks.loc[code, 'adv_proyoy'] = expr['profit_yoy']
+                df_stocks.loc[code, 'expr_eps'] = expr['eps']
 
             df_stocks.loc[code, 'industry'] = df_stocks.loc[code, 'industry']
-            df_stocks.loc[code,
-                          'url'] = f'http://emweb.securities.eastmoney.com/NewFinanceAnalysis/Index?type=web&code={capital_code}'
+            df_stocks.loc[
+                code, 'url'] = f'https://data.eastmoney.com/stockdata/{code2code_without_char}.html'
 
             fund_hold = dongcai_d.get_fund_holding(code)
             df_stocks.loc[code, 'f_hold'] = fund_hold['last_quarter']
@@ -116,10 +112,10 @@ class StockProfit:
 
         df = df[['code_name', 'industry', 'pe_ttm', 'pb', 'eps', 'peg', 'price',
                  'm_cap', 'f_cap', 'f_hold', 'f_last', 'f_chg',
-                 'rating', 'r_date', 'p_year',
-                 'r_proyoy', 'p_proyoy', 'adv_proyoy', 'r_revyoy',
-                 'pro-1', 'p_pro', 'p_pro+1', 'roe-1', 'roe_ttm', 'p_roe', 'p_roe+1',
-                 'adv_date', 'adv_rdate', 'adv_type',  'url']]
+                 'rating', 'r_date', 'r_eps', 'r_kf_eps',
+                 'p_year', 'eps-1', 'p_eps', 'p_eps+1',
+                 'roe-1', 'roe_ttm', 'p_roe', 'p_roe+1',
+                 'expr_date', 'expr_rdate', 'expr_eps', 'is_adv', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
@@ -144,9 +140,9 @@ class StockProfit:
             # worksheet.set_column('E:E', None, format1)
             worksheet.set_column('D:J', None, format1)
             worksheet.set_column('K:M', None, format2)
-            worksheet.set_column('Q:T', None, format2)
-            worksheet.set_column('U:W', None, format1)
-            worksheet.set_column('X:AA', None, format2)
+            worksheet.set_column('P:Q', None, format1)
+            worksheet.set_column('S:T', None, format1)
+            worksheet.set_column('V:Y', None, format2)
 
             # worksheet.set_row(0, None, row_format)
 

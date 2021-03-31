@@ -171,19 +171,19 @@ class DongcaiDownloader:
                           '--' else None for x in roe_list]
             f_pro_list = [
                 float(x['value'])/100000000 if x['value'] != '0.00' else None for x in pro_list]
-
             pro_grow_ratio = None
             if f_pro_list[2] and f_pro_list[0]:
                 two_year_growth = (
                     f_pro_list[2]-f_pro_list[0])/abs(f_pro_list[0])
                 if two_year_growth >= 0:
                     pro_grow_ratio = ((1+two_year_growth)**0.5-1)*100
+            eps_list = [float(x['value']) for x in rsp.json()['mgsy']]
 
             return {
                 'rate': float(latest_rating),
                 'thisyear': rsp.json()['yctj']['data'][3]['rq'],
                 'roe_list': f_roe_list[2:5],
-                'pro_list': f_pro_list[0:3],
+                'eps_list': eps_list[0:3],
                 'pro_grow_ratio': pro_grow_ratio,
             }
 
@@ -217,6 +217,7 @@ class DongcaiDownloader:
                     'revenue_qoq': express['DJDYSHZ'],
                     'profit_yoy': express['JLRTBZCL']/100 if express['JLRTBZCL'] is not None else None,
                     'profit_qoq': express['DJDJLHZ']/100 if express['DJDJLHZ'] is not None else None,
+                    'eps': express['BASIC_EPS']
                 }
 
     def get_fund_holding(self, code):
@@ -309,6 +310,7 @@ if __name__ == '__main__':
     # bao_d.get_from_xls('000300')
     # xueqiu_d.download_dkline('sh.600438', 52*5)
     # dongcai_d.get_fund_holding('sh.600928')
-    # dongcai_d.get_broker_predict('sh.600011')
-    dongcai_d.get_express_profit('sh.600875')
+    dongcai_d.get_broker_predict('sh.600011')
+    # dongcai_d.get_express_profit('sh.600875')
+    # dongcai_d.get_advance_report('sh.600875')
     # wall_d.download_dkline4daily('US10YR.OTC', 52*5)
