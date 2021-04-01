@@ -102,6 +102,8 @@ class StockProfit:
             if fund_hold['last_quarter'] and fund_hold['last_2quarter']:
                 df_stocks.loc[code, 'f_chg'] = fund_hold['last_quarter'] - \
                     fund_hold['last_2quarter']
+            else:
+                
 
         return df_stocks
 
