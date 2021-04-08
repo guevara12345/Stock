@@ -103,7 +103,7 @@ class StockProfit:
                 df_stocks.loc[code, 'f_chg'] = fund_hold['last_quarter'] - \
                     fund_hold['last_2quarter']
             else:
-                
+                df_stocks.loc[code, 'f_chg'] = None
 
         return df_stocks
 

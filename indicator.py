@@ -102,8 +102,18 @@ class Indicator:
         series = series[series.index > date]
         return series.sum()/100
 
-    def cci(self, series):
-        pass
+    def cci(self, data_frame):
+        N = 20
+        df = data_frame[['close', 'high', 'low']]
+        # df['tp'] = (df['close']+df['high']+df['low'])/3
+        df['tp'] = df['close']
+        df['tp_ma'] = df['tp'].rolling(window=N).mean()
+        df['md'] = abs(df['tp']-df['tp_ma']).rolling(window=N).mean()
+        df['cci'] = (df['tp']-df['tp_ma'])/(df['md']*0.015)
+        r = df.sort_index(ascending=False).iloc[0]
+        return {
+            'cci': r['cci'],
+        }
 
 
 indi = Indicator()
