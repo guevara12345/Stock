@@ -177,7 +177,8 @@ class DongcaiDownloader:
                     f_pro_list[2]-f_pro_list[0])/abs(f_pro_list[0])
                 if two_year_growth >= 0:
                     pro_grow_ratio = ((1+two_year_growth)**0.5-1)*100
-            eps_list = [float(x['value']) for x in rsp.json()['mgsy']]
+            eps_list = [float(x['value']) if x['value'] !=
+                        '0.00' else None for x in rsp.json()['mgsy']]
 
             return {
                 'rate': float(latest_rating),
@@ -310,7 +311,7 @@ if __name__ == '__main__':
     # bao_d.get_from_xls('000300')
     # xueqiu_d.download_dkline('sh.600438', 52*5)
     # dongcai_d.get_fund_holding('sh.600928')
-    dongcai_d.get_broker_predict('sh.600004')
+    dongcai_d.get_broker_predict('sh.601005')
     # dongcai_d.get_express_profit('sh.600875')
     # dongcai_d.get_advance_report('sh.600875')
     # wall_d.download_dkline4daily('US10YR.OTC', 52*5)

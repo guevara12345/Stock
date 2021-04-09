@@ -80,7 +80,9 @@ class StockReporter:
 
             df.loc[code, 'dif/p'] = ema_info['dif/p']
             df.loc[code, 'macd/p'] = ema_info['macd/p']
-            df.loc[code, 'macd_chg/p'] = ema_info['macd_chg/p']
+
+            cci_info = indi.cci(stock_df[['close', 'high', 'low']])
+            df.loc[code, 'cci'] = cci_info['cci']
 
             sorted_df = stock_df.sort_values(by='datetime', ascending=False)
             df.loc[code, 'pe'] = sorted_df.iloc[0]['pe']
@@ -125,7 +127,7 @@ class StockReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'industry', 'highest', 'price', 'chg_rate',
-                 'dif/p', 'macd/p', 'macd_chg/p',
+                 'dif/p', 'macd/p', 'cci',
                  'turnover', 'vol_ratio', 'atr/p', 'unit4me',
                  'cap', 'f_cap',  'pe', 'pb', 'roe_ttm', 'pe_percent', 'pb_percent',
                  'hk_ratio', 'hk-ma(hk,10)', 'belong', 'url']]
@@ -144,7 +146,9 @@ class StockReporter:
         format1 = workbook.add_format({'num_format': '0.00'})
         format2 = workbook.add_format({'num_format': '0.00%'})
 
-        worksheet.set_column('F:J', None, format2)
+        worksheet.set_column('F:H', None, format2)
+        worksheet.set_column('I:I', None, format1)
+        worksheet.set_column('J:J', None, format2)
         worksheet.set_column('L:M', None, format2)
         worksheet.set_column('N:Q', None, format1)
         worksheet.set_column('R:V', None, format2)
@@ -175,7 +179,7 @@ class StockReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'industry', 'highest', 'price', 'chg_rate',
-                 'dif/p', 'macd/p', 'macd_chg/p',
+                 'dif/p', 'macd/p', 'cci',
                  'hold', 'chg_date', 'since_chg',
                  'atr/p', 'unit4me', 'turnover', 'vol_ratio',
                  'cap', 'f_cap',  'pe', 'pb', 'roe_ttm', 'pe_percent', 'pb_percent',
@@ -195,7 +199,8 @@ class StockReporter:
         format1 = workbook.add_format({'num_format': '0.00'})
         format2 = workbook.add_format({'num_format': '0.00%'})
 
-        worksheet.set_column('F:I', None, format2)
+        worksheet.set_column('F:H', None, format2)
+        worksheet.set_column('I:I', None, format1)
         worksheet.set_column('L:P', None, format2)
         worksheet.set_column('Q:T', None, format1)
         worksheet.set_column('U:Y', None, format2)
@@ -279,7 +284,9 @@ class EtfIndexReporter:
         ema_info = indi.macd(df['close'])
         result['dif/p'] = ema_info['dif/p']
         result['macd/p'] = ema_info['macd/p']
-        result['macd_chg/p'] = ema_info['macd_chg/p']
+
+        cci_info = indi.cci(df[['close', 'high', 'low']])
+        result['cci'] = cci_info['cci']
 
         volatility_info = indi.count_volatility(df[['close', 'high', 'low']])
         result['atr/p'] = volatility_info['atr/p']
@@ -335,7 +342,7 @@ class EtfIndexReporter:
             os.mkdir(f'./raw_data/{folder_name}')
 
         df = df[['code_name', 'is_open', 'highest', 'close', 'percent',
-                 'dif/p', 'macd/p', 'macd_chg/p',
+                 'dif/p', 'macd/p', 'cci',
                  'vol_ratio', 'atr/p', 'unit4me', 'url']]
         writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                                 datetime_format='yyyy-mm-dd',
@@ -350,7 +357,7 @@ class EtfIndexReporter:
 
         # Add some cell formats.
         format2 = workbook.add_format({'num_format': '0.00%'})
-        worksheet.set_column('F:I', None, format2)
+        worksheet.set_column('F:H', None, format2)
         worksheet.set_column('K:L', None, format2)
 
         color_format = {'type': 'data_bar',
@@ -376,8 +383,8 @@ class EtfIndexReporter:
 eir = EtfIndexReporter()
 sr = StockReporter()
 if __name__ == '__main__':
-    # sr.generate_zz800_report()
-    # sr.generate_watching_report()
-    # eir.generate_etf_index_report()
+    sr.generate_zz800_report()
+    sr.generate_watching_report()
+    eir.generate_etf_index_report()
     eir.corr()
     # sr.debug_stock('sh.603288')
