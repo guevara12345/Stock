@@ -170,15 +170,19 @@ class DongcaiDownloader:
             f_roe_list = [float(x)/100 if x !=
                           '--' else None for x in roe_list]
             f_pro_list = [
-                float(x['value'])/100000000 if x['value'] != '0.00' else None for x in pro_list]
+                float(x['value'])/100000000 if x['value'] !=
+                '0.00' and x['value'] != '--' else None for x in pro_list
+            ]
             pro_grow_ratio = None
             if f_pro_list[2] and f_pro_list[0]:
                 two_year_growth = (
                     f_pro_list[2]-f_pro_list[0])/abs(f_pro_list[0])
                 if two_year_growth >= 0:
                     pro_grow_ratio = ((1+two_year_growth)**0.5-1)*100
-            eps_list = [float(x['value']) if x['value'] !=
-                        '0.00' else None for x in rsp.json()['mgsy']]
+            eps_list = [
+                float(x['value']) if x['value'] != '0.00' and x['value'] !=
+                '--' else None for x in rsp.json()['mgsy']
+            ]
 
             return {
                 'rate': float(latest_rating),

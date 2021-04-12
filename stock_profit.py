@@ -81,6 +81,8 @@ class StockProfit:
             adv = dongcai_d.get_advance_report(
                 code, datetime.fromisoformat(report['date']))
             if adv:
+                df_stocks.loc[code, 'adv_date'] = pd.to_datetime(
+                    adv['release_date'])
                 df_stocks.loc[code, 'is_adv'] = 'Y'
 
             expr = dongcai_d.get_express_profit(
@@ -117,7 +119,7 @@ class StockProfit:
                  'rating', 'r_date', 'r_eps', 'r_kf_eps',
                  'p_year', 'eps-1', 'p_eps', 'p_eps+1',
                  'roe-1', 'roe_ttm', 'p_roe', 'p_roe+1',
-                 'expr_date', 'expr_rdate', 'expr_eps', 'is_adv', 'url']]
+                 'expr_date', 'expr_rdate', 'expr_eps', 'adv_date', 'is_adv', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
