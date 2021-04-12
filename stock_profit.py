@@ -119,6 +119,7 @@ class StockProfit:
                  'rating', 'r_date', 'r_eps', 'r_kf_eps',
                  'p_year', 'eps-1', 'p_eps', 'p_eps+1',
                  'roe-1', 'roe_ttm', 'p_roe', 'p_roe+1',
+<<<<<<< HEAD
                  'expr_date', 'expr_rdate', 'expr_eps', 'adv_date', 'is_adv', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
@@ -155,6 +156,44 @@ class StockProfit:
 
             # Close the Pandas Excel writer and output the Excel file.
             writer.save()
+=======
+                 'expr_date', 'expr_rdate', 'expr_eps', 'is_adv', 'url']]
+        writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
+                                datetime_format='yyyy-mm-dd',
+                                engine='xlsxwriter',
+                                options={'remove_timezone': True})
+        # Convert the dataframe to an XlsxWriter Excel object.
+        df.to_excel(writer, encoding="gbk", sheet_name='Sheet1')
+
+        # Get the xlsxwriter workbook and worksheet objects.
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
+
+        # Add some cell formats.
+        # format1 = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+        format1 = workbook.add_format({'num_format': '0.00'})
+        format2 = workbook.add_format({'num_format': '0.00%'})
+        # row_format = workbook.add_format({'bg_color': 'green'})
+
+        # Note: It isn't possible to format any cells that already have a format such
+        # as the index or headers or any cells that contain dates or datetimes.
+
+        # Set the format but not the column width.
+        # worksheet.set_column('E:E', None, format1)
+        worksheet.set_column('D:I', None, format1)
+        worksheet.set_column('J:L', None, format2)
+        worksheet.set_column('O:P', None, format1)
+        worksheet.set_column('R:T', None, format1)
+        worksheet.set_column('U:X', None, format2)
+
+        # worksheet.set_row(0, None, row_format)
+
+        # Freeze the first row.
+        worksheet.freeze_panes(1, 3)
+
+        # Close the Pandas Excel writer and output the Excel file.
+        writer.save()
+>>>>>>> a13b159263bc5bc799abdb87b4e3fcb3d0c940c1
 
 
 profit = StockProfit()
