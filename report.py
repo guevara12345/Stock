@@ -323,7 +323,7 @@ class EtfIndexReporter:
         #          "农业ETF", "中概互联网ETF", "医疗ETF", "医药ETF", "煤炭ETF",
         #          "钢铁ETF", "计算机ETF", "房地产ETF", ]]
         df = df.sort_index(ascending=False)[0:26*5-1]
-        corr = df.corr(method='pearson')
+        corr = df.corr(method='spearman')
         _, ax = plt.subplots(figsize=(12, 10))  # 分辨率1200×1000
         _ = sns.heatmap(corr,  # 使用Pandas DataFrame数据，索引/列信息用于标记列和行F
                         cmap="RdBu_r",  # 数据值到颜色空间的映射
@@ -383,8 +383,8 @@ class EtfIndexReporter:
 eir = EtfIndexReporter()
 sr = StockReporter()
 if __name__ == '__main__':
-    sr.generate_zz800_report()
-    sr.generate_watching_report()
-    eir.generate_etf_index_report()
+    # sr.generate_zz800_report()
+    # sr.generate_watching_report()
+    # eir.generate_etf_index_report()
     eir.corr()
     # sr.debug_stock('sh.603288')
