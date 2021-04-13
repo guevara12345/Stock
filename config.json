@@ -1,12 +1,34 @@
 {
     "watching_stocks": [
         {
+            "code": "sh.603127",
+            "code_name": "昭衍新药",
+            "holding": false,
+            "chg_date": "2021-04-13",
+            "chg_reason": ""
+        },
+        {
+            "code": "sz.002821",
+            "code_name": "凯莱英",
+            "holding": false,
+            "chg_date": "2021-04-13",
+            "chg_reason": ""
+        },
+        {
+            "code": "sz.002138",
+            "code_name": "顺络电子",
+            "holding": false,
+            "chg_date": "2021-04-13",
+            "chg_reason": ""
+        },
+        {
             "code": "sh.600346",
             "code_name": "恒力石化",
             "holding": false,
             "chg_date": "2021-03-04",
             "chg_reason": ""
-        },{
+        },
+        {
             "code": "sz.002493",
             "code_name": "荣盛石化",
             "holding": true,
