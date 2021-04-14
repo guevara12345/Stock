@@ -201,7 +201,7 @@ class StockReporter:
 
         worksheet.set_column('F:H', None, format2)
         worksheet.set_column('I:I', None, format1)
-        worksheet.set_column('L:P', None, format2)
+        worksheet.set_column('L:O', None, format2)
         worksheet.set_column('Q:T', None, format1)
         worksheet.set_column('U:Y', None, format2)
 
