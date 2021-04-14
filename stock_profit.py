@@ -20,14 +20,14 @@ class StockProfit:
         hs300_df = hs300_df.set_index("code")
         profit_hs300_df = self.get_stock_profit_data(hs300_df)
 
-        # print('start generate zz500 profit report')
-        # zz500_df = pd.read_csv(os.path.join(
-        #     os.getcwd(), 'raw_data/zz500_stocks.csv'), index_col=1, encoding="gbk")
-        # zz500_df = zz500_df.set_index("code")
-        # profit_zz500_df = self.get_stock_profit_data(zz500_df)
-        # profit_df = pd.concat([profit_hs300_df, profit_zz500_df])
+        print('start generate zz500 profit report')
+        zz500_df = pd.read_csv(os.path.join(
+            os.getcwd(), 'raw_data/zz500_stocks.csv'), index_col=1, encoding="gbk")
+        zz500_df = zz500_df.set_index("code")
+        profit_zz500_df = self.get_stock_profit_data(zz500_df)
+        profit_df = pd.concat([profit_hs300_df, profit_zz500_df])
 
-        profit_df = profit_hs300_df
+        # profit_df = profit_hs300_df
         time_str = datetime.now().strftime('%H%M%S')
         self.save2file(f'financial_zz800_{time_str}', profit_df)
         # self.save2file(f'financial_hs300_{time_str}', profit_hs300_df)
@@ -51,14 +51,15 @@ class StockProfit:
             df_stocks.loc[code, 'roe'] = detail['roe']
 
             report = dongcai_d.get_report(code)
-            df_stocks.loc[code, 'update_date'] = pd.to_datetime(report['update_date'])
+            df_stocks.loc[code, 'update_date'] = pd.to_datetime(
+                report['update_date'])
             df_stocks.loc[code, 'account_p'] = report['account_p']
-            df_stocks.loc[code, 'account_date'] = pd.to_datetime(report['account_date'])
+            df_stocks.loc[code, 'account_date'] = report['account_date']
             df_stocks.loc[code, 'r_eps'] = report['eps']
-            df_stocks.loc[code, 'r_kf_eps'] = report['kf_eps']
+            df_stocks.loc[code, 'r_kfeps'] = report['kf_eps']
 
             predict = dongcai_d.get_broker_predict(code)
-            df_stocks.loc[code, 'rating'] = float(predict['rate'])
+            df_stocks.loc[code, 'rate'] = float(predict['rate'])
             df_stocks.loc[code, 'p_year'] = predict['thisyear']
             df_stocks.loc[code, 'roe-1'] = predict['roe_list'][0]
             df_stocks.loc[code, 'p_roe'] = predict['roe_list'][1]
@@ -79,19 +80,18 @@ class StockProfit:
             #     df_stocks.loc[code,'ratio2'] = float(predict[2,'ratio'])
 
             adv = dongcai_d.get_advance_report(
-                code, datetime.fromisoformat(report['date']))
+                code, datetime.fromisoformat(report['account_date']))
             if adv:
                 df_stocks.loc[code, 'adv_date'] = pd.to_datetime(
                     adv['release_date'])
                 df_stocks.loc[code, 'is_adv'] = 'Y'
 
             expr = dongcai_d.get_express_profit(
-                code, datetime.fromisoformat(report['date']))
+                code, datetime.fromisoformat(report['account_date']))
             if expr:
                 df_stocks.loc[code, 'expr_date'] = pd.to_datetime(
                     expr['release_date'])
-                df_stocks.loc[code, 'expr_period'] = pd.to_datetime(
-                    expr['report_date'])
+                df_stocks.loc[code, 'expr_period'] = expr['expr_period']
                 df_stocks.loc[code, 'expr_eps'] = expr['eps']
 
             df_stocks.loc[code, 'industry'] = df_stocks.loc[code, 'industry']
@@ -116,45 +116,45 @@ class StockProfit:
 
         df = df[['code_name', 'industry', 'pe_ttm', 'pb', 'peg', 'price',
                  'm_cap', 'f_cap', 'f_hold', 'f_last', 'f_chg',
-                 'rating', 'update_date', 'account_p', 'r_eps', 'r_kf_eps',
+                 'rate', 'update_date', 'account_p', 'r_eps', 'r_kfeps',
                  'p_year', 'eps-1', 'p_eps', 'p_eps+1',
                  'roe-1', 'roe_ttm', 'p_roe', 'p_roe+1',
                  'expr_date', 'expr_period', 'expr_eps', 'adv_date', 'is_adv', 'url']]
-        with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
-                            datetime_format='yyyy-mm-dd',
-                            engine='xlsxwriter',
-                            options={'remove_timezone': True}) as writer:
-            # Convert the dataframe to an XlsxWriter Excel object.
-            df.to_excel(writer, encoding="gbk", sheet_name='Sheet1')
+        writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
+                                datetime_format='yyyy-mm-dd',
+                                engine='xlsxwriter',
+                                options={'remove_timezone': True})
+        # Convert the dataframe to an XlsxWriter Excel object.
+        df.to_excel(writer, encoding="gbk", sheet_name='Sheet1')
 
-            # Get the xlsxwriter workbook and worksheet objects.
-            workbook = writer.book
-            worksheet = writer.sheets['Sheet1']
+        # Get the xlsxwriter workbook and worksheet objects.
+        workbook = writer.book
+        worksheet = writer.sheets['Sheet1']
 
-            # Add some cell formats.
-            # format1 = workbook.add_format({'num_format': 'yyyy-mm-dd'})
-            format1 = workbook.add_format({'num_format': '0.00'})
-            format2 = workbook.add_format({'num_format': '0.00%'})
-            # row_format = workbook.add_format({'bg_color': 'green'})
+        # Add some cell formats.
+        # format1 = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+        format1 = workbook.add_format({'num_format': '0.00'})
+        format2 = workbook.add_format({'num_format': '0.00%'})
+        # row_format = workbook.add_format({'bg_color': 'green'})
 
-            # Note: It isn't possible to format any cells that already have a format such
-            # as the index or headers or any cells that contain dates or datetimes.
+        # Note: It isn't possible to format any cells that already have a format such
+        # as the index or headers or any cells that contain dates or datetimes.
 
-            # Set the format but not the column width.
-            # worksheet.set_column('E:E', None, format1)
-            worksheet.set_column('D:I', None, format1)
-            worksheet.set_column('J:L', None, format2)
-            worksheet.set_column('P:Q', None, format1)
-            worksheet.set_column('S:U', None, format1)
-            worksheet.set_column('V:Y', None, format2)
+        # Set the format but not the column width.
+        # worksheet.set_column('E:E', None, format1)
+        worksheet.set_column('D:I', None, format1)
+        worksheet.set_column('J:L', None, format2)
+        worksheet.set_column('P:Q', None, format1)
+        worksheet.set_column('S:U', None, format1)
+        worksheet.set_column('V:Y', None, format2)
 
-            # worksheet.set_row(0, None, row_format)
+        # worksheet.set_row(0, None, row_format)
 
-            # Freeze the first row.
-            worksheet.freeze_panes(1, 3)
+        # Freeze the first row.
+        worksheet.freeze_panes(1, 3)
 
-            # Close the Pandas Excel writer and output the Excel file.
-            writer.save()
+        # Close the Pandas Excel writer and output the Excel file.
+        writer.save()
 
 
 profit = StockProfit()

@@ -151,7 +151,7 @@ class DongcaiDownloader:
             return {
                 'update_date': report['UPDATE_DATE'],
                 'account_date': report['REPORTDATE'],
-                'account_p': '{}Q{}'.format(
+                'account_p': '{}-Q{}'.format(
                     account_p.strftime('%Y'), (int(account_p.strftime('%m'))-1)//3+1),
                 'eps': report['BASIC_EPS'],
                 'kf_eps': report['DEDUCT_BASIC_EPS'],
@@ -201,11 +201,11 @@ class DongcaiDownloader:
         rsp = self.session.get(url)
         if rsp.status_code == 200 and rsp.json()['result']:
             predict = rsp.json()['result']['data'][0]
-            account_p = predict['REPORTDATE']
             if(datetime.fromisoformat(predict['REPORTDATE']) > last_report_date):
+                account_p = datetime.fromisoformat(predict['REPORTDATE'])
                 return {
                     'release_date': predict['NOTICE_DATE'],
-                    'report_date': '{}Q{}'.format(
+                    'adv_period': '{}-Q{}'.format(
                         account_p.strftime('%Y'), (int(account_p.strftime('%m'))-1)//3+1),
                     'predict_type': predict['FORECASTTYPE'],
                     'increase': predict['INCREASEL']/100 if predict['INCREASEL'] is not None else None,
@@ -219,9 +219,11 @@ class DongcaiDownloader:
         if rsp.status_code == 200 and rsp.json()['result'] is not None:
             express = rsp.json()['result']['data'][0]
             if(datetime.fromisoformat(express['REPORT_DATE']) > last_report_date):
+                account_p = datetime.fromisoformat(express['REPORT_DATE'])
                 return {
                     'release_date': express['UPDATE_DATE'],
-                    'report_date': express['REPORT_DATE'],
+                    'expr_period': '{}-Q{}'.format(
+                        account_p.strftime('%Y'), (int(account_p.strftime('%m'))-1)//3+1),
                     'revenue': express['YSTZ'],
                     'revenue_qoq': express['DJDYSHZ'],
                     'profit_yoy': express['JLRTBZCL']/100 if express['JLRTBZCL'] is not None else None,
