@@ -142,17 +142,19 @@ class DongcaiDownloader:
 
     # 最近财务报表
     def get_report(self, code):
-        capital_code = code_formatter.code2capita(code)
-        url = f'http://f10.eastmoney.com/NewFinanceAnalysis/MainTargetAjax?type=0&code={capital_code}'
+        code_without_char = code_formatter.code2code_without_char(code)
+        url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_LICO_FN_CPD'
         rsp = self.session.get(url)
         if rsp.status_code == 200:
-            p_json = rsp.json()[0]
+            report = rsp.json()['result']['data'][0]
+            account_p = datetime.fromisoformat(report['REPORTDATE'])
             return {
-                'date': p_json['date'] if p_json['date'] != '--' else None,
-                'eps': float(p_json['jbmgsy']) if p_json['jbmgsy'] != '--' else None,
-                'kf_eps': float(p_json['kfmgsy']) if p_json['kfmgsy'] != '--' else None,
-                'profit_yoy': float(p_json['kfjlrtbzz'])/100 if p_json['kfjlrtbzz'] != '--' else None,
-                'revenue_yoy': float(p_json['yyzsrtbzz'])/100 if p_json['yyzsrtbzz'] != '--' else None,
+                'update_date': report['UPDATE_DATE'],
+                'account_date': report['REPORTDATE'],
+                'account_p': '{}Q{}'.format(
+                    account_p.strftime('%Y'), (int(account_p.strftime('%m'))-1)//3+1),
+                'eps': report['BASIC_EPS'],
+                'kf_eps': report['DEDUCT_BASIC_EPS'],
             }
 
     # 券商研报预测
@@ -199,10 +201,12 @@ class DongcaiDownloader:
         rsp = self.session.get(url)
         if rsp.status_code == 200 and rsp.json()['result']:
             predict = rsp.json()['result']['data'][0]
+            account_p = predict['REPORTDATE']
             if(datetime.fromisoformat(predict['REPORTDATE']) > last_report_date):
                 return {
                     'release_date': predict['NOTICE_DATE'],
-                    'report_date': predict['REPORTDATE'],
+                    'report_date': '{}Q{}'.format(
+                        account_p.strftime('%Y'), (int(account_p.strftime('%m'))-1)//3+1),
                     'predict_type': predict['FORECASTTYPE'],
                     'increase': predict['INCREASEL']/100 if predict['INCREASEL'] is not None else None,
                 }
@@ -314,6 +318,7 @@ if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
     # bao_d.get_from_xls('000300')
     # xueqiu_d.download_dkline('sh.600438', 52*5)
+    dongcai_d.get_report('sh.601005')
     # dongcai_d.get_fund_holding('sh.600928')
     dongcai_d.get_broker_predict('sh.601005')
     # dongcai_d.get_express_profit('sh.600875')

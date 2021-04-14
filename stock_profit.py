@@ -20,14 +20,14 @@ class StockProfit:
         hs300_df = hs300_df.set_index("code")
         profit_hs300_df = self.get_stock_profit_data(hs300_df)
 
-        print('start generate zz500 profit report')
-        zz500_df = pd.read_csv(os.path.join(
-            os.getcwd(), 'raw_data/zz500_stocks.csv'), index_col=1, encoding="gbk")
-        zz500_df = zz500_df.set_index("code")
-        profit_zz500_df = self.get_stock_profit_data(zz500_df)
-        profit_df = pd.concat([profit_hs300_df, profit_zz500_df])
+        # print('start generate zz500 profit report')
+        # zz500_df = pd.read_csv(os.path.join(
+        #     os.getcwd(), 'raw_data/zz500_stocks.csv'), index_col=1, encoding="gbk")
+        # zz500_df = zz500_df.set_index("code")
+        # profit_zz500_df = self.get_stock_profit_data(zz500_df)
+        # profit_df = pd.concat([profit_hs300_df, profit_zz500_df])
 
-        # profit_df = profit_hs300_df
+        profit_df = profit_hs300_df
         time_str = datetime.now().strftime('%H%M%S')
         self.save2file(f'financial_zz800_{time_str}', profit_df)
         # self.save2file(f'financial_hs300_{time_str}', profit_hs300_df)
@@ -51,11 +51,11 @@ class StockProfit:
             df_stocks.loc[code, 'roe'] = detail['roe']
 
             report = dongcai_d.get_report(code)
-            df_stocks.loc[code, 'r_date'] = pd.to_datetime(report['date'])
+            df_stocks.loc[code, 'update_date'] = pd.to_datetime(report['update_date'])
+            df_stocks.loc[code, 'account_p'] = report['account_p']
+            df_stocks.loc[code, 'account_date'] = pd.to_datetime(report['account_date'])
             df_stocks.loc[code, 'r_eps'] = report['eps']
             df_stocks.loc[code, 'r_kf_eps'] = report['kf_eps']
-            df_stocks.loc[code, 'r_proyoy'] = report['profit_yoy']
-            df_stocks.loc[code, 'r_revyoy'] = report['revenue_yoy']
 
             predict = dongcai_d.get_broker_predict(code)
             df_stocks.loc[code, 'rating'] = float(predict['rate'])
@@ -90,7 +90,7 @@ class StockProfit:
             if expr:
                 df_stocks.loc[code, 'expr_date'] = pd.to_datetime(
                     expr['release_date'])
-                df_stocks.loc[code, 'expr_rdate'] = pd.to_datetime(
+                df_stocks.loc[code, 'expr_period'] = pd.to_datetime(
                     expr['report_date'])
                 df_stocks.loc[code, 'expr_eps'] = expr['eps']
 
@@ -116,10 +116,10 @@ class StockProfit:
 
         df = df[['code_name', 'industry', 'pe_ttm', 'pb', 'peg', 'price',
                  'm_cap', 'f_cap', 'f_hold', 'f_last', 'f_chg',
-                 'rating', 'r_date', 'r_eps', 'r_kf_eps',
+                 'rating', 'update_date', 'account_p', 'r_eps', 'r_kf_eps',
                  'p_year', 'eps-1', 'p_eps', 'p_eps+1',
                  'roe-1', 'roe_ttm', 'p_roe', 'p_roe+1',
-                 'expr_date', 'expr_rdate', 'expr_eps', 'adv_date', 'is_adv', 'url']]
+                 'expr_date', 'expr_period', 'expr_eps', 'adv_date', 'is_adv', 'url']]
         with pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                             datetime_format='yyyy-mm-dd',
                             engine='xlsxwriter',
@@ -144,9 +144,9 @@ class StockProfit:
             # worksheet.set_column('E:E', None, format1)
             worksheet.set_column('D:I', None, format1)
             worksheet.set_column('J:L', None, format2)
-            worksheet.set_column('O:P', None, format1)
-            worksheet.set_column('R:T', None, format1)
-            worksheet.set_column('U:X', None, format2)
+            worksheet.set_column('P:Q', None, format1)
+            worksheet.set_column('S:U', None, format1)
+            worksheet.set_column('V:Y', None, format2)
 
             # worksheet.set_row(0, None, row_format)
 

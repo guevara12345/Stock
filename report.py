@@ -357,7 +357,7 @@ class EtfIndexReporter:
 
         # Add some cell formats.
         format2 = workbook.add_format({'num_format': '0.00%'})
-        worksheet.set_column('F:H', None, format2)
+        worksheet.set_column('F:I', None, format2)
         worksheet.set_column('K:L', None, format2)
 
         color_format = {'type': 'data_bar',
