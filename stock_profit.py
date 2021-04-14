@@ -119,7 +119,7 @@ class StockProfit:
                  'rate', 'update_date', 'account_p', 'r_eps', 'r_kfeps',
                  'p_year', 'eps-1', 'p_eps', 'p_eps+1',
                  'roe-1', 'roe_ttm', 'p_roe', 'p_roe+1',
-                 'expr_date', 'expr_period', 'expr_eps', 'adv_date', 'is_adv', 'url']]
+                 'expr_date', 'expr_period', 'expr_eps', 'adv_date', 'url']]
         writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                                 datetime_format='yyyy-mm-dd',
                                 engine='xlsxwriter',
