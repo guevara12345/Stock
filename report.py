@@ -357,7 +357,9 @@ class EtfIndexReporter:
 
         # Add some cell formats.
         format2 = workbook.add_format({'num_format': '0.00%'})
-        worksheet.set_column('F:I', None, format2)
+        format1 = workbook.add_format({'num_format': '0.00'})
+        worksheet.set_column('F:H', None, format2)
+        worksheet.set_column('I:I', None, format1)
         worksheet.set_column('K:L', None, format2)
 
         color_format = {'type': 'data_bar',
@@ -385,6 +387,6 @@ sr = StockReporter()
 if __name__ == '__main__':
     # sr.generate_zz800_report()
     # sr.generate_watching_report()
-    # eir.generate_etf_index_report()
+    eir.generate_etf_index_report()
     eir.corr()
     # sr.debug_stock('sh.603288')
