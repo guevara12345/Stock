@@ -388,5 +388,5 @@ if __name__ == '__main__':
     # sr.generate_zz800_report()
     # sr.generate_watching_report()
     eir.generate_etf_index_report()
-    eir.corr()
+    # eir.corr()
     # sr.debug_stock('sh.603288')
