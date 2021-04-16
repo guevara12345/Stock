@@ -7,6 +7,7 @@ import time
 import xlsxwriter
 import matplotlib.pyplot as plt  # 可视化
 import seaborn as sns  # 可视化
+from scipy.stats import norm
 
 from downloader import bao_d, xueqiu_d, wall_d
 from basic_stock_data import basic
@@ -107,9 +108,9 @@ class StockReporter:
                 df.loc[code, 'hk-ma(hk,30)'] = hk_info['hk-ma(hk,30)']/100
 
             if df.loc[code, 'pe'] > 0:
-                pepb_band = indi.count_pe_pb_band(stock_df)
-                df.loc[code, 'pe_percent'] = pepb_band['pe_percent']
-                df.loc[code, 'pb_percent'] = pepb_band['pb_percent']
+                #     pepb_band = indi.count_pe_pb_band(stock_df)
+                #     df.loc[code, 'pe_percent'] = pepb_band['pe_percent']
+                #     df.loc[code, 'pb_percent'] = pepb_band['pb_percent']
                 df.loc[code, 'roe_ttm'] = df.loc[code, 'pb']/df.loc[code, 'pe']
 
             vol_info = indi.count_quantity_ratio(stock_df)
@@ -129,7 +130,7 @@ class StockReporter:
         df = df[['code_name', 'industry', 'highest', 'price', 'chg_rate',
                  'dif/p', 'macd/p', 'cci',
                  'turnover', 'vol_ratio', 'atr/p', 'unit4me',
-                 'cap', 'f_cap',  'pe', 'pb', 'roe_ttm', 'pe_percent', 'pb_percent',
+                 'cap', 'f_cap',  'pe', 'pb', 'pe_max', 'pe_mean', 'pe_min', 'roe_ttm',
                  'hk_ratio', 'hk-ma(hk,10)', 'belong', 'url']]
         writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                                 datetime_format='yyyy-mm-dd',
@@ -150,8 +151,8 @@ class StockReporter:
         worksheet.set_column('I:I', None, format1)
         worksheet.set_column('J:J', None, format2)
         worksheet.set_column('L:M', None, format2)
-        worksheet.set_column('N:Q', None, format1)
-        worksheet.set_column('R:V', None, format2)
+        worksheet.set_column('N:T', None, format1)
+        worksheet.set_column('U:W', None, format2)
         color_format = {'type': 'data_bar',
                         'bar_solid': True, 'bar_color': '#4169E1', }
         worksheet.conditional_format('F1:F801', color_format)
@@ -160,10 +161,9 @@ class StockReporter:
         worksheet.conditional_format('I1:I801', color_format)
         worksheet.conditional_format('J1:J801', color_format)
         worksheet.conditional_format('K1:K801', color_format)
-        worksheet.conditional_format('R1:R801', color_format)
-        worksheet.conditional_format('S1:S801', color_format)
         worksheet.conditional_format('U1:U801', color_format)
         worksheet.conditional_format('V1:V801', color_format)
+        worksheet.conditional_format('W1:W801', color_format)
 
         # worksheet.set_row(0, None, row_format)
 
@@ -182,7 +182,7 @@ class StockReporter:
                  'dif/p', 'macd/p', 'cci',
                  'hold', 'chg_date', 'since_chg',
                  'atr/p', 'unit4me', 'turnover', 'vol_ratio',
-                 'cap', 'f_cap',  'pe', 'pb', 'roe_ttm', 'pe_percent', 'pb_percent',
+                 'cap', 'f_cap',  'pe', 'pb', 'pe_max', 'pe_mean', 'pe_min',  'roe_ttm',
                  'hk_ratio', 'hk-ma(hk,10)', 'url']]
         writer = pd.ExcelWriter(f'./raw_data/{folder_name}/{filename}.xlsx',
                                 datetime_format='yyyy-mm-dd',
@@ -202,8 +202,8 @@ class StockReporter:
         worksheet.set_column('F:H', None, format2)
         worksheet.set_column('I:I', None, format1)
         worksheet.set_column('L:O', None, format2)
-        worksheet.set_column('Q:T', None, format1)
-        worksheet.set_column('U:Y', None, format2)
+        worksheet.set_column('Q:W', None, format1)
+        worksheet.set_column('X:Z', None, format2)
 
         color_format = {'type': 'data_bar',
                         'bar_solid': True, 'bar_color': '#4169E1', }
@@ -214,10 +214,10 @@ class StockReporter:
         worksheet.conditional_format('L1:L801', color_format)
         worksheet.conditional_format('M1:M801', color_format)
         worksheet.conditional_format('N1:N801', color_format)
-        worksheet.conditional_format('U1:U801', color_format)
-        worksheet.conditional_format('V1:V801', color_format)
+
         worksheet.conditional_format('X1:X801', color_format)
         worksheet.conditional_format('Y1:Y801', color_format)
+        worksheet.conditional_format('Z1:Z801', color_format)
 
         format3 = workbook.add_format({'bg_color': '#4169E1', })
         worksheet.conditional_format(
@@ -385,8 +385,10 @@ class EtfIndexReporter:
 eir = EtfIndexReporter()
 sr = StockReporter()
 if __name__ == '__main__':
-    # sr.generate_zz800_report()
+    sr.generate_zz800_report()
     # sr.generate_watching_report()
-    eir.generate_etf_index_report()
+    # sr.get_ep('sz.002568')
+    # sr.get_ep('sh.600754')
+    # eir.generate_etf_index_report()
     # eir.corr()
     # sr.debug_stock('sh.603288')

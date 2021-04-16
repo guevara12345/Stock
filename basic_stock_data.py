@@ -39,6 +39,7 @@ class BaiscStockData:
             if is_outdate is None:
                 is_outdate = self.check_index_component_outdate(
                     row[0], file_path)
+                # is_outdate = True
                 hs300_stocks.append(row)
             elif is_outdate == True:
                 # 获取一条记录，将记录合并在一起
@@ -68,6 +69,7 @@ class BaiscStockData:
             if is_outdate is None:
                 is_outdate = self.check_index_component_outdate(
                     row[0], file_path)
+                # is_outdate = True
                 zz500_stocks.append(row)
             elif is_outdate == True:
                 # 获取一条记录，将记录合并在一起
@@ -102,8 +104,26 @@ class BaiscStockData:
                 # 获取一条记录，将记录合并在一起
                 industry_list.append(rs.get_row_data())
             df.loc[code, 'industry'] = industry_list[0][3]
+            pe_distr = self.get_ep_distr(code)
+            df.loc[code, 'pe_max'] = pe_distr['pe_max']
+            df.loc[code, 'pe_mean'] = pe_distr['pe_mean']
+            df.loc[code, 'pe_min'] = pe_distr['pe_min']
             print(f'get stock info of {code}')
         return df
+
+    def get_ep_distr(self, code):
+        stock_df = xueqiu_d.download_dkline4daily(code, 52*5*10)
+        ep = stock_df['pe'].apply(lambda x: 1/x)
+        mean = ep.mean()
+        std = ep.std()
+        r = {
+            'pe_max': 1/(mean-std),
+            'pe_mean': 1/mean,
+            'pe_min': 1/(mean+std),
+        }
+        # sns.distplot(ep, fit=norm)
+        # plt.show()
+        return r
 
     def get_stock_industry_from_dongcai(self, df):
         for code in df.index.values.tolist():

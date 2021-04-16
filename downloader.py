@@ -93,6 +93,28 @@ class XueqiuDownloader:
             result['datetime'] = pd.to_datetime(
                 result['timestamp']+(8*3600)*1000, unit='ms')
             return result.set_index('datetime')
+    
+    def download_wkline4daily(self, code, num):
+        XUEQIU_D_KLINE_URL_FORMAT = '''
+            https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol={}&begin={}&period=week&type=before&count={}&indicator=kline,pe,pb,ps,pcf,market_capital,agt,ggt,balance
+        '''
+        capital_code = code_formatter.code2capita(code)
+        timestamp = int(((datetime.now()+timedelta(days=1)).timestamp())*1000)
+        url = XUEQIU_D_KLINE_URL_FORMAT.format(
+            capital_code, timestamp, -num)
+        rsp = self.session.get(url)
+        if rsp.status_code == 200:
+            print(
+                f'download {num} days day_kline data of {capital_code}')
+            dkline_json = rsp.json()
+            result = pd.DataFrame(
+                dkline_json['data']['item'], columns=dkline_json['data']['column'])
+            return result
+        if result is not None:
+            # 时区硬转utc+8，excel不支持时区信息
+            result['datetime'] = pd.to_datetime(
+                result['timestamp']+(8*3600)*1000, unit='ms')
+            return result.set_index('datetime')
 
     def download_stock_detail(self, code):
         capital_code = code_formatter.code2capita(code)
