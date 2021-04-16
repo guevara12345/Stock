@@ -65,6 +65,15 @@ class StockReporter:
                 code_formatter.code2capita(i['code']))
             if i['code'] in stock_df.index:
                 series['industry'] = stock_df.loc[i['code'], 'industry']
+                series['pe_max'] = stock_df.loc[i['code'], 'pe_max']
+                series['pe_mean'] = stock_df.loc[i['code'], 'pe_mean']
+                series['pe_min'] = stock_df.loc[i['code'], 'pe_min']
+            else:
+                stock_info=basic.get_stock_detail_from_bao(i['code'])
+                series['industry'] = stock_info['industry']
+                series['pe_max'] = stock_info['pe_max']
+                series['pe_mean'] = stock_info['pe_mean']
+                series['pe_min'] = stock_info['pe_min']
             series['hold'] = 'Y' if i.get('holding') else None
             series['chg_date'] = datetime.fromisoformat(i['chg_date'])
             watching_df = watching_df.append(series, ignore_index=True)
@@ -385,10 +394,10 @@ class EtfIndexReporter:
 eir = EtfIndexReporter()
 sr = StockReporter()
 if __name__ == '__main__':
-    sr.generate_zz800_report()
-    # sr.generate_watching_report()
+    # sr.generate_zz800_report()
+    sr.generate_watching_report()
     # sr.get_ep('sz.002568')
     # sr.get_ep('sh.600754')
-    # eir.generate_etf_index_report()
+    eir.generate_etf_index_report()
     # eir.corr()
     # sr.debug_stock('sh.603288')

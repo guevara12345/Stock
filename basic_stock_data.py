@@ -50,7 +50,13 @@ class BaiscStockData:
 
         result = result.set_index("code")
         # result = self.get_stock_industry_from_dongcai(result)
-        result = self.get_stock_detail_from_bao(result)
+        for code in result.index.values.tolist():
+            stock_info = self.get_stock_detail_from_bao(code)
+            result.loc[code, 'url'] = stock_info['url']
+            result.loc[code, 'industry'] = stock_info['industry']
+            result.loc[code, 'pe_max'] = stock_info['pe_max']
+            result.loc[code, 'pe_mean'] = stock_info['pe_mean']
+            result.loc[code, 'pe_min'] = stock_info['pe_min']
         # 结果集输出到csv文件
         result.to_csv(file_path, encoding="gbk")
 
@@ -80,8 +86,13 @@ class BaiscStockData:
 
         result = result.set_index("code")
         # result = self.get_stock_industry_from_dongcai(result)
-        result = self.get_stock_detail_from_bao(result)
-
+        for code in result.index.values.tolist():
+            stock_info = self.get_stock_detail_from_bao(code)
+            result.loc[code, 'url'] = stock_info['url']
+            result.loc[code, 'industry'] = stock_info['industry']
+            result.loc[code, 'pe_max'] = stock_info['pe_max']
+            result.loc[code, 'pe_mean'] = stock_info['pe_mean']
+            result.loc[code, 'pe_min'] = stock_info['pe_min']
         # 结果集输出到csv文件
         result.to_csv(file_path, encoding="gbk")
 
@@ -92,24 +103,23 @@ class BaiscStockData:
         else:
             return False
 
-    def get_stock_detail_from_bao(self, df):
-        for code in df.index.values.tolist():
-            # self.download_dayline_from_bao2file(code, 'hs300_d')
-            code2capita = code_formatter.code2capita(code)
-            df.loc[code,
-                   'url'] = f'https://xueqiu.com/S/{code2capita}'
-            rs = bs.query_stock_industry(code)
-            industry_list = []
-            while (rs.error_code == '0') & rs.next():
-                # 获取一条记录，将记录合并在一起
-                industry_list.append(rs.get_row_data())
-            df.loc[code, 'industry'] = industry_list[0][3]
-            pe_distr = self.get_ep_distr(code)
-            df.loc[code, 'pe_max'] = pe_distr['pe_max']
-            df.loc[code, 'pe_mean'] = pe_distr['pe_mean']
-            df.loc[code, 'pe_min'] = pe_distr['pe_min']
-            print(f'get stock info of {code}')
-        return df
+    def get_stock_detail_from_bao(self, code):
+        print(f'get stock info of {code}')
+        code2capita = code_formatter.code2capita(code)
+        rs = bs.query_stock_industry(code)
+        industry_list = []
+        while (rs.error_code == '0') & rs.next():
+            # 获取一条记录，将记录合并在一起
+            industry_list.append(rs.get_row_data())
+        industry = industry_list[0][3]
+        pe_distr = self.get_ep_distr(code)
+        return {
+            'url': f'https://xueqiu.com/S/{code2capita}',
+            'industry': industry,
+            'pe_max': pe_distr['pe_max'],
+            'pe_mean': pe_distr['pe_mean'],
+            'pe_min': pe_distr['pe_min'],
+        }
 
     def get_ep_distr(self, code):
         stock_df = xueqiu_d.download_dkline4daily(code, 52*5*10)
