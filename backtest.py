@@ -129,9 +129,9 @@ if __name__ == '__main__':
     data = bt.feeds.PandasData(
         dataname=dataframe,
         # Do not pass values before this date
-        fromdate=datetime.datetime(2010, 1, 1),
+        fromdate=datetime.datetime(2016, 1, 1),
         # Do not pass values before this date
-        todate=datetime.datetime(2020, 12, 31),
+        todate=datetime.datetime(2021, 4, 1),
         # Do not pass values after this date
         # reverse=False
         )
@@ -147,6 +147,11 @@ if __name__ == '__main__':
 
     # Set the commission
     cerebro.broker.setcommission(commission=0.0)
+
+    cerebro.addanalyzer(bt.analyzers.TimeReturn, _name='pnl') # 返回收益率时序数据
+    cerebro.addanalyzer(bt.analyzers.AnnualReturn, _name='_AnnualReturn') # 年化收益率
+    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='_SharpeRatio') # 夏普比率
+    cerebro.addanalyzer(bt.analyzers.DrawDown, _name='_DrawDown') # 回撤
 
     # Print out the starting conditions
     print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
