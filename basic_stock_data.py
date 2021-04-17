@@ -134,8 +134,8 @@ class BaiscStockData:
             'pe_mean': 1/mean,
             'pe_min': 1/(mean+std),
         }
-        sns.distplot(ep, fit=norm)
-        plt.show()
+        # sns.distplot(ep, fit=norm)
+        # plt.show()
         return r
 
     def get_stock_industry_from_dongcai(self, df):
