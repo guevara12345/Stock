@@ -103,7 +103,7 @@ class Indicator:
         return series.sum()/100
 
     def cci(self, data_frame):
-        N = 20
+        N = 14
         df = data_frame[['close', 'high', 'low']]
         # df['tp'] = (df['close']+df['high']+df['low'])/3
         df['tp'] = df['close']

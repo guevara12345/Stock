@@ -6,6 +6,9 @@ import time
 import requests
 from lxml import etree
 import re
+import matplotlib.pyplot as plt  # 可视化
+import seaborn as sns  # 可视化
+from scipy.stats import norm
 
 from downloader import bao_d, xueqiu_d
 from code_formmat import code_formatter
@@ -131,8 +134,8 @@ class BaiscStockData:
             'pe_mean': 1/mean,
             'pe_min': 1/(mean+std),
         }
-        # sns.distplot(ep, fit=norm)
-        # plt.show()
+        sns.distplot(ep, fit=norm)
+        plt.show()
         return r
 
     def get_stock_industry_from_dongcai(self, df):
@@ -173,6 +176,8 @@ class BaiscStockData:
 basic = BaiscStockData()
 
 if __name__ == '__main__':
-    basic.hs300_index_component()
-    basic.zz500_index_component()
-    # basic.get_profit('SH600690')
+    # basic.hs300_index_component()
+    # basic.zz500_index_component()
+    basic.get_ep_distr('sh.600346')
+    basic.get_ep_distr('sz.002493')
+
