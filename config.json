@@ -1,6 +1,13 @@
 {
     "watching_stocks": [
         {
+            "code": "sz.002439",
+            "code_name": "启明星辰",
+            "holding": false,
+            "chg_date": "2021-04-19",
+            "chg_reason": ""
+        },
+        {
             "code": "sh.603127",
             "code_name": "昭衍新药",
             "holding": false,
