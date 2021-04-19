@@ -1,6 +1,13 @@
 {
     "watching_stocks": [
         {
+            "code": "sz.300142",
+            "code_name": "沃森生物",
+            "holding": false,
+            "chg_date": "2021-04-19",
+            "chg_reason": ""
+        },
+        {
             "code": "sz.002439",
             "code_name": "启明星辰",
             "holding": false,
@@ -86,18 +93,6 @@
             "code_name": "北方华创",
             "chg_date": "2021-02-15",
             "chg_reason": ""
-        },
-        {
-            "code": "sz.300144",
-            "code_name": "宋城演艺",
-            "chg_date": "2021-02-15",
-            "chg_reason": "旅游业恢复"
-        },
-        {
-            "code": "sh.601808",
-            "code_name": "中海油服",
-            "chg_date": "2021-02-15",
-            "chg_reason": "油价上涨"
         },
         {
             "code": "sz.000636",
