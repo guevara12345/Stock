@@ -221,8 +221,8 @@ class StockReporter:
         worksheet.conditional_format('H1:H801', color_format)
         worksheet.conditional_format('I1:I801', color_format)
         worksheet.conditional_format('L1:L801', color_format)
-        worksheet.conditional_format('M1:M801', color_format)
-        worksheet.conditional_format('N1:N801', color_format)
+        # worksheet.conditional_format('M1:M801', color_format)
+        # worksheet.conditional_format('N1:N801', color_format)
 
         worksheet.conditional_format('X1:X801', color_format)
         worksheet.conditional_format('Y1:Y801', color_format)
