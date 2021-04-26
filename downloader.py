@@ -8,6 +8,7 @@ import requests
 import math
 
 from code_formmat import code_formatter
+from sync import AsnycGrab
 
 
 class BaoDownloader:
@@ -93,7 +94,7 @@ class XueqiuDownloader:
             result['datetime'] = pd.to_datetime(
                 result['timestamp']+(8*3600)*1000, unit='ms')
             return result.set_index('datetime')
-    
+
     def download_wkline4daily(self, code, num):
         XUEQIU_D_KLINE_URL_FORMAT = '''
             https://stock.xueqiu.com/v5/stock/chart/kline.json?symbol={}&begin={}&period=week&type=before&count={}&indicator=kline,pe,pb,ps,pcf,market_capital,agt,ggt,balance
@@ -149,6 +150,43 @@ class XueqiuDownloader:
                 'vol_ratio': detail_json.get('volume_ratio'),
             }
 
+    def sync_stock_detail(self, code_list):
+        def parse(code, json):
+            print('handle stock detail info of {}'.format(code))
+            detail_json = json['data']['quote']
+            market_json = json['data']['market']
+
+            roe = None
+            if detail_json.get('pb') and detail_json.get('pe_lyr'):
+                roe = detail_json.get('pb') / \
+                    detail_json.get('pe_lyr')
+            market_capital = None
+            if detail_json.get('market_capital'):
+                market_capital = detail_json.get(
+                    'market_capital')/100000000
+            float_market_capital = None
+            if detail_json.get('float_market_capital'):
+                float_market_capital = detail_json.get(
+                    'float_market_capital')/100000000
+            return {
+                'is_open': 'Y' if market_json.get('status_id') == 5 else 'N',
+                'roe': roe,
+                'price': detail_json.get('last_close'),
+                'eps': detail_json.get('eps'),
+                'pe_ttm': detail_json.get('pe_ttm'),
+                'pb': detail_json.get('pb'),
+                'market_value': market_capital,
+                'float_market_capital': float_market_capital,
+                'vol_ratio': detail_json.get('volume_ratio'),
+            }
+
+        URL_FORMAT = 'https://stock.xueqiu.com/v5/stock/quote.json?symbol={}&extend=detail'
+        reqs_info = [{'code': code, 'url': URL_FORMAT.format(code_formatter.code2capita(code))
+                      } for code in code_list]
+        downloader = AsnycGrab(reqs_info, parse, 'https://xueqiu.com/')
+        downloader.start()
+        return downloader.results
+
 
 class DongcaiDownloader:
     def __init__(self):
@@ -163,12 +201,10 @@ class DongcaiDownloader:
             '融资融券', '上证180_', '上证50_', '上证380']
 
     # 最近财务报表
-    def get_report(self, code):
-        code_without_char = code_formatter.code2code_without_char(code)
-        url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_LICO_FN_CPD'
-        rsp = self.session.get(url)
-        if rsp.status_code == 200:
-            report = rsp.json()['result']['data'][0]
+    def sync_report(self, code_list):
+        def parse(req_info, json):
+            print('handle stock report of {}'.format(req_info['code']))
+            report = json['result']['data'][0]
             account_p = datetime.fromisoformat(report['REPORTDATE'])
             return {
                 'update_date': report['UPDATE_DATE'],
@@ -179,18 +215,24 @@ class DongcaiDownloader:
                 'kf_eps': report['DEDUCT_BASIC_EPS'],
             }
 
+        url_format = 'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{}%22)&type=RPT_LICO_FN_CPD'
+        req_info = [{'url': url_format.format(code_formatter.code2code_without_char(code)),
+                     'code': code} for code in code_list]
+        downloader = AsnycGrab(
+            req_info, parse, 'http://data.eastmoney.com/center/')
+        downloader.start()
+        return downloader.results
+
     # 券商研报预测
-    def get_broker_predict(self, code):
-        code2capita = code_formatter.code2capita(code)
-        url = f'http://f10.eastmoney.com/ProfitForecast/ProfitForecastAjax?code={code2capita}'
-        rsp = self.session.get(url)
-        if rsp.status_code == 200 and rsp.json() is not None:
-            stock_rating = rsp.json()['pjtj']
+    def sync_broker_predict(self, code_list):
+        def parse(req_info, json):
+            print('handle broker predict of {}'.format(req_info['code']))
+            stock_rating = json['pjtj']
             if len(stock_rating) > 0:
                 latest_rating = stock_rating[2]['pjxs']
             roe_list = [x['jzcsyl'].split('(')[0]
-                        for x in rsp.json()['yctj']['data']]
-            pro_list = rsp.json()['gsjlr']
+                        for x in json['yctj']['data']]
+            pro_list = json['gsjlr']
             f_roe_list = [float(x)/100 if x !=
                           '--' else None for x in roe_list]
             f_pro_list = [
@@ -205,16 +247,24 @@ class DongcaiDownloader:
                     pro_grow_ratio = ((1+two_year_growth)**0.5-1)*100
             eps_list = [
                 float(x['value']) if x['value'] != '0.00' and x['value'] !=
-                '--' else None for x in rsp.json()['mgsy']
+                '--' else None for x in json['mgsy']
             ]
 
             return {
                 'rate': float(latest_rating),
-                'thisyear': rsp.json()['yctj']['data'][3]['rq'],
+                'thisyear': json['yctj']['data'][3]['rq'],
                 'roe_list': f_roe_list[2:5],
                 'eps_list': eps_list[0:3],
                 'pro_grow_ratio': pro_grow_ratio,
             }
+
+        url_format = 'http://f10.eastmoney.com/ProfitForecast/ProfitForecastAjax?code={}'
+        req_info = [{'url': url_format.format(code_formatter.code2capita(code)), 'code': code}
+                    for code in code_list]
+        downloader = AsnycGrab(
+            req_info, parse, 'http://data.eastmoney.com/center/')
+        downloader.start()
+        return downloader.results
 
     # 业绩预测
     def get_advance_report(self, code, last_report_date):
@@ -233,7 +283,31 @@ class DongcaiDownloader:
                     'increase': predict['INCREASEL']/100 if predict['INCREASEL'] is not None else None,
                 }
 
-    # 业绩快报
+    def sync_advance_report(self, stock_info_list):
+        def parse(req_info, json):
+            if json['result']:
+                predict = json['result']['data'][0]
+                if(datetime.fromisoformat(predict['REPORTDATE']) > req_info['last_report_date']):
+                    account_p = datetime.fromisoformat(predict['REPORTDATE'])
+                    return {
+                        'release_date': predict['NOTICE_DATE'],
+                        'adv_period': '{}-Q{}'.format(
+                            account_p.strftime('%Y'), (int(account_p.strftime('%m'))-1)//3+1),
+                        'predict_type': predict['FORECASTTYPE'],
+                        'increase': predict['INCREASEL']/100 if predict['INCREASEL'] is not None else None,
+                    }
+
+        url_format = 'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{}%22)&type=RPT_PUBLIC_OP_PREDICT'
+        req_info = [{'code': item['code'],
+                     'url':url_format.format(code_formatter.code2code_without_char(item['code'])),
+                     'last_report_date':item['last_report_date']} for item in stock_info_list]
+        downloader = AsnycGrab(
+            req_info, parse, 'http://data.eastmoney.com/center/')
+        downloader.start()
+        return downloader.results
+
+        # 业绩快报
+
     def get_express_profit(self, code, last_report_date):
         code_without_char = code_formatter.code2code_without_char(code)
         url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORT_DATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_FCI_PERFORMANCEE'
@@ -342,6 +416,7 @@ if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
     # bao_d.get_from_xls('000300')
     # xueqiu_d.download_dkline('sh.600438', 52*5)
+    xueqiu_d.sync_stock_detail(['sh.600438', 'sh.600928'])
     # dongcai_d.get_report('sh.601005')
     # dongcai_d.get_fund_holding('sh.600928')
     dongcai_d.get_broker_predict('sh.600029')

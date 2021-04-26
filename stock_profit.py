@@ -34,23 +34,25 @@ class StockProfit:
         # self.save2file(f'financial_zz500_{time_str}', profit_zz500_df)
 
     def get_stock_profit_data(self, df_stocks):
-        for code in df_stocks.index.tolist():
-            print(f'get profit info of {code}')
-            code2code_without_char = code_formatter.code2code_without_char(
-                code)
+        code_list = df_stocks.index.tolist()
 
-            detail = xueqiu_d.download_stock_detail(code)
+        detail_dict = xueqiu_d.sync_stock_detail(code_list)
+        for code in code_list:
+            detail = detail_dict[code]
             df_stocks.loc[code, 'm_cap'] = detail['market_value']
             df_stocks.loc[code, 'f_cap'] = detail['float_market_capital']
             df_stocks.loc[code, 'pe_ttm'] = detail['pe_ttm']
             df_stocks.loc[code, 'pb'] = detail['pb']
             df_stocks.loc[code, 'eps'] = detail['eps']
             if detail['pb'] and detail['pe_ttm']:
-                df_stocks.loc[code, 'roe_ttm'] = detail['pb']/detail['pe_ttm']
+                df_stocks.loc[code, 'roe_ttm'] = detail['pb'] / \
+                    detail['pe_ttm']
             df_stocks.loc[code, 'price'] = detail['price']
             df_stocks.loc[code, 'roe'] = detail['roe']
 
-            report = dongcai_d.get_report(code)
+        report_dict = dongcai_d.sync_report(code_list)
+        for code in code_list:
+            report = report_dict[code]
             df_stocks.loc[code, 'update_date'] = pd.to_datetime(
                 report['update_date'])
             df_stocks.loc[code, 'account_p'] = report['account_p']
@@ -58,7 +60,9 @@ class StockProfit:
             df_stocks.loc[code, 'r_eps'] = report['eps']
             df_stocks.loc[code, 'r_kfeps'] = report['kf_eps']
 
-            predict = dongcai_d.get_broker_predict(code)
+        predict_dict = dongcai_d.sync_broker_predict(code_list)
+        for code in code_list:
+            predict = predict_dict[code]
             df_stocks.loc[code, 'rate'] = float(predict['rate'])
             df_stocks.loc[code, 'p_year'] = predict['thisyear']
             df_stocks.loc[code, 'roe-1'] = predict['roe_list'][0]
@@ -79,33 +83,38 @@ class StockProfit:
             #     df_stocks.loc[code,'eps2'] = float(predict[2,'value'])
             #     df_stocks.loc[code,'ratio2'] = float(predict[2,'ratio'])
 
-            adv = dongcai_d.get_advance_report(
-                code, datetime.fromisoformat(report['account_date']))
+        req_info = [{'code': code,
+                     'last_report_date': datetime.fromisoformat(df_stocks.loc[code, 'account_date'])
+                     } for code in code_list]
+        adv_dict = dongcai_d.sync_advance_report(req_info)
+        for code in code_list:
+            adv = adv_dict[code]
             if adv:
                 df_stocks.loc[code, 'adv_date'] = pd.to_datetime(
                     adv['release_date'])
                 df_stocks.loc[code, 'is_adv'] = 'Y'
 
-            expr = dongcai_d.get_express_profit(
-                code, datetime.fromisoformat(report['account_date']))
-            if expr:
-                df_stocks.loc[code, 'expr_date'] = pd.to_datetime(
-                    expr['release_date'])
-                df_stocks.loc[code, 'expr_period'] = expr['expr_period']
-                df_stocks.loc[code, 'expr_eps'] = expr['eps']
+        expr = dongcai_d.get_express_profit(
+            code, datetime.fromisoformat(report['account_date']))
+        if expr:
+            df_stocks.loc[code, 'expr_date'] = pd.to_datetime(
+                expr['release_date'])
+            df_stocks.loc[code, 'expr_period'] = expr['expr_period']
+            df_stocks.loc[code, 'expr_eps'] = expr['eps']
 
-            df_stocks.loc[code, 'industry'] = df_stocks.loc[code, 'industry']
-            df_stocks.loc[
-                code, 'url'] = f'https://data.eastmoney.com/stockdata/{code2code_without_char}.html'
+        code2code_without_char = code_formatter.code2code_without_char(code)
+        df_stocks.loc[code, 'industry'] = df_stocks.loc[code, 'industry']
+        df_stocks.loc[
+            code, 'url'] = f'https://data.eastmoney.com/stockdata/{code2code_without_char}.html'
 
-            fund_hold = dongcai_d.get_fund_holding(code)
-            df_stocks.loc[code, 'f_hold'] = fund_hold['last_quarter']
-            df_stocks.loc[code, 'f_last'] = fund_hold['last_2quarter']
-            if fund_hold['last_quarter'] and fund_hold['last_2quarter']:
-                df_stocks.loc[code, 'f_chg'] = fund_hold['last_quarter'] - \
-                    fund_hold['last_2quarter']
-            else:
-                df_stocks.loc[code, 'f_chg'] = None
+        fund_hold = dongcai_d.get_fund_holding(code)
+        df_stocks.loc[code, 'f_hold'] = fund_hold['last_quarter']
+        df_stocks.loc[code, 'f_last'] = fund_hold['last_2quarter']
+        if fund_hold['last_quarter'] and fund_hold['last_2quarter']:
+            df_stocks.loc[code, 'f_chg'] = fund_hold['last_quarter'] - \
+                fund_hold['last_2quarter']
+        else:
+            df_stocks.loc[code, 'f_chg'] = None
 
         return df_stocks
 
