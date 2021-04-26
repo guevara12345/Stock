@@ -151,8 +151,8 @@ class XueqiuDownloader:
             }
 
     def sync_stock_detail(self, code_list):
-        def parse(code, json):
-            print('handle stock detail info of {}'.format(code))
+        def parse(req_info, json):
+            print('handle stock detail info of {}'.format(req_info['code']))
             detail_json = json['data']['quote']
             market_json = json['data']['market']
 
@@ -216,10 +216,10 @@ class DongcaiDownloader:
             }
 
         url_format = 'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{}%22)&type=RPT_LICO_FN_CPD'
-        req_info = [{'url': url_format.format(code_formatter.code2code_without_char(code)),
-                     'code': code} for code in code_list]
+        req_info_list = [{'url': url_format.format(code_formatter.code2code_without_char(code)),
+                          'code': code} for code in code_list]
         downloader = AsnycGrab(
-            req_info, parse, 'http://data.eastmoney.com/center/')
+            req_info_list, parse, 'http://data.eastmoney.com/center/')
         downloader.start()
         return downloader.results
 
@@ -267,27 +267,13 @@ class DongcaiDownloader:
         return downloader.results
 
     # 业绩预测
-    def get_advance_report(self, code, last_report_date):
-        code_without_char = code_formatter.code2code_without_char(code)
-        url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORTDATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_PUBLIC_OP_PREDICT'
-        rsp = self.session.get(url)
-        if rsp.status_code == 200 and rsp.json()['result']:
-            predict = rsp.json()['result']['data'][0]
-            if(datetime.fromisoformat(predict['REPORTDATE']) > last_report_date):
-                account_p = datetime.fromisoformat(predict['REPORTDATE'])
-                return {
-                    'release_date': predict['NOTICE_DATE'],
-                    'adv_period': '{}-Q{}'.format(
-                        account_p.strftime('%Y'), (int(account_p.strftime('%m'))-1)//3+1),
-                    'predict_type': predict['FORECASTTYPE'],
-                    'increase': predict['INCREASEL']/100 if predict['INCREASEL'] is not None else None,
-                }
-
     def sync_advance_report(self, stock_info_list):
         def parse(req_info, json):
+            print('handle advance report of {}'.format(req_info['code']))
             if json['result']:
                 predict = json['result']['data'][0]
-                if(datetime.fromisoformat(predict['REPORTDATE']) > req_info['last_report_date']):
+                report_date = datetime.fromisoformat(predict['REPORTDATE'])
+                if(report_date > req_info['last_report_date']):
                     account_p = datetime.fromisoformat(predict['REPORTDATE'])
                     return {
                         'release_date': predict['NOTICE_DATE'],
@@ -306,29 +292,63 @@ class DongcaiDownloader:
         downloader.start()
         return downloader.results
 
-        # 业绩快报
+    # 业绩快报
+    def sync_express_report(self, stock_info_list):
+        def parse(req_info, json):
+            print('handle express report of {}'.format(req_info['code']))
+            if json['result']:
+                express = json['result']['data'][0]
+                report_date = datetime.fromisoformat(express['REPORT_DATE'])
+                if(report_date > req_info['last_report_date']):
+                    account_p = datetime.fromisoformat(express['REPORT_DATE'])
+                    return {
+                        'release_date': express['UPDATE_DATE'],
+                        'expr_period': '{}-Q{}'.format(
+                            account_p.strftime('%Y'), (int(account_p.strftime('%m'))-1)//3+1),
+                        'revenue': express['YSTZ'],
+                        'revenue_qoq': express['DJDYSHZ'],
+                        'profit_yoy': express['JLRTBZCL']/100 if express['JLRTBZCL'] is not None else None,
+                        'profit_qoq': express['DJDJLHZ']/100 if express['DJDJLHZ'] is not None else None,
+                        'eps': express['BASIC_EPS']
+                    }
+        url_format = 'http://datacenter.eastmoney.com/api/data/get?st=REPORT_DATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{}%22)&type=RPT_FCI_PERFORMANCEE'
+        req_info = [{'code': item['code'],
+                     'url':url_format.format(code_formatter.code2code_without_char(item['code'])),
+                     'last_report_date':item['last_report_date']} for item in stock_info_list]
+        downloader = AsnycGrab(
+            req_info, parse, 'http://data.eastmoney.com/center/')
+        downloader.start()
+        return downloader.results
 
-    def get_express_profit(self, code, last_report_date):
-        code_without_char = code_formatter.code2code_without_char(code)
-        url = f'http://datacenter.eastmoney.com/api/data/get?st=REPORT_DATE&sr=-1&ps=50&p=1&sty=ALL&filter=(SECURITY_CODE%3D%22{code_without_char}%22)&type=RPT_FCI_PERFORMANCEE'
-        rsp = self.session.get(url)
-        if rsp.status_code == 200 and rsp.json()['result'] is not None:
-            express = rsp.json()['result']['data'][0]
-            if(datetime.fromisoformat(express['REPORT_DATE']) > last_report_date):
-                account_p = datetime.fromisoformat(express['REPORT_DATE'])
-                return {
-                    'release_date': express['UPDATE_DATE'],
-                    'expr_period': '{}-Q{}'.format(
-                        account_p.strftime('%Y'), (int(account_p.strftime('%m'))-1)//3+1),
-                    'revenue': express['YSTZ'],
-                    'revenue_qoq': express['DJDYSHZ'],
-                    'profit_yoy': express['JLRTBZCL']/100 if express['JLRTBZCL'] is not None else None,
-                    'profit_qoq': express['DJDJLHZ']/100 if express['DJDJLHZ'] is not None else None,
-                    'eps': express['BASIC_EPS']
-                }
+    # def sync_fund_holding(self, code):
+    #     today = datetime.now()
+    #     quarter = (today.month-1)//3
+    #     if quarter == 1:
+    #         last_quarter = datetime(today.year, 3, 31).strftime('%Y-%m-%d')
+    #         last_2quarter = datetime(today.year-1, 12, 31).strftime('%Y-%m-%d')
+    #     elif quarter == 2:
+    #         last_quarter = datetime(today.year, 6, 30).strftime('%Y-%m-%d')
+    #         last_2quarter = datetime(today.year, 3, 31).strftime('%Y-%m-%d')
+    #     elif quarter == 3:
+    #         last_quarter = datetime(today.year, 9, 30).strftime('%Y-%m-%d')
+    #         last_2quarter = datetime(today.year, 6, 30).strftime('%Y-%m-%d')
+    #     else:
+    #         last_quarter = datetime(today.year-1, 12, 31).strftime('%Y-%m-%d')
+    #         last_2quarter = datetime(today.year-1, 9, 30).strftime('%Y-%m-%d')
+    #     def parse(req_info, json):
 
-    def get_fund_holding(self, code):
-        code2capita = code_formatter.code2capita(code)
+    def sync_fund_holding(self, code_list):
+        def parse(req_info, json):
+            print('handle fund hold info of {}'.format(req_info['code']))
+            # ['基金', '保险', '券商', 'QFII', '社保基金', '信托', '其他机构', '合计']
+            fund_type = ['基金', ]
+            data1 = json
+            fund_holding = 0
+            for i in data1:
+                if i['jglx'] in fund_type and i['zltgbl'] != '--':
+                    fund_holding = + float(i['zltgbl'].split('%')[0])
+            return fund_holding/100
+
         today = datetime.now()
         quarter = (today.month-1)//3
         if quarter == 1:
@@ -344,31 +364,28 @@ class DongcaiDownloader:
             last_quarter = datetime(today.year-1, 12, 31).strftime('%Y-%m-%d')
             last_2quarter = datetime(today.year-1, 9, 30).strftime('%Y-%m-%d')
 
-        URL_FORMAT = 'http://f10.eastmoney.com/ShareholderResearch/MainPositionsHodlerAjax?date={}&code={}'
-        last_quarter_fund_holding = 0
-        last_2quarter_fund_holding = 0
-        rsp1 = self.session.get(URL_FORMAT.format(last_quarter, code2capita))
-        # ['基金', '保险', '券商', 'QFII', '社保基金', '信托', '其他机构', '合计']
-        fund_type = ['基金', ]
-        if rsp1.status_code == 200:
-            data1 = rsp1.json()
-            for i in data1:
-                if i['jglx'] in fund_type and i['zltgbl'] != '--':
-                    last_quarter_fund_holding = last_quarter_fund_holding+float(
-                        i['zltgbl'].split('%')[0])
-        rsp2 = self.session.get(URL_FORMAT.format(last_2quarter, code2capita))
-        if rsp2.status_code == 200:
-            data2 = rsp2.json()
-            for i in data2:
-                if i['jglx'] in fund_type and i['zltgbl'] != '--':
-                    last_2quarter_fund_holding = last_2quarter_fund_holding+float(
-                        i['zltgbl'].split('%')[0])
-        last_quarter = last_quarter_fund_holding/100
-        last_2quarter = last_2quarter_fund_holding/100
-        return {
-            'last_quarter': last_quarter if last_quarter > 0 else None,
-            'last_2quarter': last_2quarter if last_2quarter > 0 else None,
-        }
+        r = {}
+        url_format = 'http://f10.eastmoney.com/ShareholderResearch/MainPositionsHodlerAjax?date={}&code={}'
+        last_req_info_list = [{
+            'code': code,
+            'url': url_format.format(last_quarter, code_formatter.code2capita(code)),
+        } for code in code_list]
+        last_d = AsnycGrab(
+            last_req_info_list, parse, 'http://data.eastmoney.com/center/')
+        last_d.start()
+        for key in last_d.results.keys():
+            r[key] = {'last_quarter': last_d.results[key]}
+        last2_req_info_list = [{
+            'code': code,
+            'url': url_format.format(last_2quarter, code_formatter.code2capita(code)),
+        } for code in code_list]
+        last2_d = AsnycGrab(
+            last2_req_info_list, parse, 'http://data.eastmoney.com/center/')
+        last2_d.start()
+        for key in last_d.results.keys():
+            r[key]['last_2quarter'] = last2_d.results[key]
+
+        return r
 
 
 class WallcnDownloader:

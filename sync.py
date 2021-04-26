@@ -18,7 +18,7 @@ class AsnycGrab(object):
                 assert rsp.status == 200
                 # text = await rsp.text()
                 json = await rsp.json(content_type=None)
-                self.results[req_info['code']] = self.parse(req_info['code'], json)
+                self.results[req_info['code']] = self.parse(req_info, json)
 
     async def eventloop(self):
         q = asyncio.Queue()

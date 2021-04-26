@@ -84,7 +84,8 @@ class StockProfit:
             #     df_stocks.loc[code,'ratio2'] = float(predict[2,'ratio'])
 
         req_info = [{'code': code,
-                     'last_report_date': datetime.fromisoformat(df_stocks.loc[code, 'account_date'])
+                     'last_report_date': datetime.fromisoformat(
+                         df_stocks.loc[code, 'account_date'])
                      } for code in code_list]
         adv_dict = dongcai_d.sync_advance_report(req_info)
         for code in code_list:
@@ -94,27 +95,29 @@ class StockProfit:
                     adv['release_date'])
                 df_stocks.loc[code, 'is_adv'] = 'Y'
 
-        expr = dongcai_d.get_express_profit(
-            code, datetime.fromisoformat(report['account_date']))
-        if expr:
-            df_stocks.loc[code, 'expr_date'] = pd.to_datetime(
-                expr['release_date'])
-            df_stocks.loc[code, 'expr_period'] = expr['expr_period']
-            df_stocks.loc[code, 'expr_eps'] = expr['eps']
+        expr_dict = dongcai_d.sync_express_report(req_info)
+        for code in code_list:
+            expr = expr_dict[code]
+            if expr:
+                df_stocks.loc[code, 'expr_date'] = pd.to_datetime(
+                    expr['release_date'])
+                df_stocks.loc[code, 'expr_period'] = expr['expr_period']
+                df_stocks.loc[code, 'expr_eps'] = expr['eps']
+        for code in code_list:
+            url_format = 'https://data.eastmoney.com/stockdata/{}.html'
+            df_stocks.loc[code, 'url'] = url_format.format(
+                code_formatter.code2code_without_char(code))
 
-        code2code_without_char = code_formatter.code2code_without_char(code)
-        df_stocks.loc[code, 'industry'] = df_stocks.loc[code, 'industry']
-        df_stocks.loc[
-            code, 'url'] = f'https://data.eastmoney.com/stockdata/{code2code_without_char}.html'
-
-        fund_hold = dongcai_d.get_fund_holding(code)
-        df_stocks.loc[code, 'f_hold'] = fund_hold['last_quarter']
-        df_stocks.loc[code, 'f_last'] = fund_hold['last_2quarter']
-        if fund_hold['last_quarter'] and fund_hold['last_2quarter']:
-            df_stocks.loc[code, 'f_chg'] = fund_hold['last_quarter'] - \
-                fund_hold['last_2quarter']
-        else:
-            df_stocks.loc[code, 'f_chg'] = None
+        fund_hold_dict = dongcai_d.sync_fund_holding(code_list)
+        for code in code_list:
+            fund_hold = fund_hold_dict[code]
+            df_stocks.loc[code, 'f_hold'] = fund_hold['last_quarter']
+            df_stocks.loc[code, 'f_last'] = fund_hold['last_2quarter']
+            if fund_hold['last_quarter'] and fund_hold['last_2quarter']:
+                df_stocks.loc[code, 'f_chg'] = fund_hold['last_quarter'] - \
+                    fund_hold['last_2quarter']
+            else:
+                df_stocks.loc[code, 'f_chg'] = None
 
         return df_stocks
 
