@@ -6,6 +6,7 @@ import os
 import json
 import requests
 import math
+from lxml import etree
 
 from code_formmat import code_formatter
 from sync import AsnycGrab
@@ -186,6 +187,32 @@ class XueqiuDownloader:
         downloader = AsnycGrab(reqs_info, parse, 'https://xueqiu.com/')
         downloader.start()
         return downloader.results
+
+    def get_indusrty_list(self):
+        rsp = self.session.get('https://xueqiu.com/hq')
+        if rsp.status_code == 200:
+            html = etree.HTML(rsp.text)
+            list_level2info = [{
+                'code': item.xpath('@data-level2code')[0], 'code_name': item.xpath('text()')[0]
+            } for item in html.xpath('//a[@data-level2code]')]
+            list_level2info = [
+                level2info for level2info in list_level2info if code_formatter.islevel2code(
+                    level2info['code'])]
+        return list_level2info
+
+    def get_stock_of_indus(self, indus_code):
+        page = 1
+        size = 90
+        count = 91
+        timestamp = int(((datetime.now()+timedelta(days=1)).timestamp())*1000)
+        url_format = 'https://xueqiu.com/service/v5/stock/screener/quote/list?{page}=1&{size}=90&order=desc&order_by=percent&exchange=CN&market=CN&ind_code={indus_code}&_={timestamp}'
+        while page*size < count:
+            rsp = self.session.get(url_format.format(
+                page=page, size=size, indus_code=indus_code, timestamp=timestamp))
+            if rsp.status_code == 200 and rsp.json()['error_code'] == 0:
+                data = rsp.json()['data']
+                count = data['count']
+                stocks = data['list']
 
 
 class DongcaiDownloader:
@@ -433,10 +460,11 @@ if __name__ == '__main__':
     # bao_d.download_dayline_from_bao('sh.600438')
     # bao_d.get_from_xls('000300')
     # xueqiu_d.download_dkline('sh.600438', 52*5)
-    xueqiu_d.sync_stock_detail(['sh.600438', 'sh.600928'])
+    # xueqiu_d.sync_stock_detail(['sh.600438', 'sh.600928'])
+    xueqiu_d.get_indusrty()
     # dongcai_d.get_report('sh.601005')
     # dongcai_d.get_fund_holding('sh.600928')
-    dongcai_d.get_broker_predict('sh.600029')
+    # dongcai_d.get_broker_predict('sh.600029')
     # dongcai_d.get_express_profit('sh.600875')
     # dongcai_d.get_advance_report('sh.600875')
     # wall_d.download_dkline4daily('US10YR.OTC', 52*5)

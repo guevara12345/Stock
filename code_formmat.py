@@ -25,7 +25,12 @@ class Formatter:
         else:
             # 非a股code
             return code
-
+    def islevel2code(self,level2code):
+        m = re.match(r'S(\d{4})', level2code)
+        if m:
+            return True
+        else: 
+            return False
 
 code_formatter = Formatter()
 
