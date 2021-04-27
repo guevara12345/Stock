@@ -37,14 +37,17 @@ class BaiscStockData:
             './raw_data/xueqiu_industry.csv', index_col=0, encoding="gbk")
 
     def hs300_index_component(self):
-        file_path = os.path.join(os.getcwd(), f'raw_data/hs300_stocks.csv')
+        file_path = './raw_data/hs300_stocks.csv'
+        if os.path.exists(file_path):
+            is_outdate = None
+        else:
+            is_outdate = True
         # 获取沪深300成分股
         rs = bs.query_hs300_stocks()
         print(f'hs300_index_component, error_code:{rs.error_code}')
 
         # 打印结果集
         hs300_stocks = []
-        is_outdate = None
         while (rs.error_code == '0') & rs.next():
             row = rs.get_row_data()
             if is_outdate is None:
@@ -72,14 +75,17 @@ class BaiscStockData:
         result.to_csv(file_path, encoding="gbk")
 
     def zz500_index_component(self):
-        file_path = os.path.join(os.getcwd(), f'raw_data/zz500_stocks.csv')
+        file_path = './raw_data/zz500_stocks.csv'
+        if os.path.exists(file_path):
+            is_outdate = None
+        else:
+            is_outdate = True
         # 获取中证500成分股
         rs = bs.query_zz500_stocks()
         print(f'zz500_index_component, error_code:{rs.error_code}')
 
         # 打印结果集
         zz500_stocks = []
-        is_outdate = None
         while (rs.error_code == '0') & rs.next():
             # 获取一条记录，将记录合并在一起
             row = rs.get_row_data()

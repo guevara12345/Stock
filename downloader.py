@@ -193,7 +193,8 @@ class XueqiuDownloader:
         if rsp.status_code == 200:
             html = etree.HTML(rsp.text)
             list_level2info = [{
-                'code': item.xpath('@data-level2code')[0], 'code_name': item.xpath('text()')[0]
+                'code': item.xpath('@data-level2code')[0], 
+                'code_name': item.xpath('@title')[0]
             } for item in html.xpath('//a[@data-level2code]')]
             list_level2info = [
                 level2info for level2info in list_level2info if code_formatter.islevel2code(
