@@ -69,7 +69,7 @@ class StockReporter:
                 series['pe_mean'] = stock_df.loc[i['code'], 'pe_mean']
                 series['pe_min'] = stock_df.loc[i['code'], 'pe_min']
             else:
-                stock_info=basic.get_stock_detail_from_bao(i['code'])
+                stock_info=basic.get_stock_detail(i['code'])
                 series['industry'] = stock_info['industry']
                 series['pe_max'] = stock_info['pe_max']
                 series['pe_mean'] = stock_info['pe_mean']

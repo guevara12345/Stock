@@ -200,19 +200,39 @@ class XueqiuDownloader:
                     level2info['code'])]
         return list_level2info
 
-    def get_stock_of_indus(self, indus_code):
+    def get_stock_of_indus(self, indus_info):
+        print('download industry info of {}'.format(indus_info['code_name']))
         page = 1
         size = 90
-        count = 91
+        count = 1
+        stock_df = pd.DataFrame(
+            columns=['code', 'code_name', 'industry'], index=[])
         timestamp = int(((datetime.now()+timedelta(days=1)).timestamp())*1000)
-        url_format = 'https://xueqiu.com/service/v5/stock/screener/quote/list?{page}=1&{size}=90&order=desc&order_by=percent&exchange=CN&market=CN&ind_code={indus_code}&_={timestamp}'
-        while page*size < count:
+        url_format = 'https://xueqiu.com/service/v5/stock/screener/quote/list?page={page}&size={size}&order=desc&order_by=percent&exchange=CN&market=CN&ind_code={indus_code}&_={timestamp}'
+        while (page-1)*size < count:
             rsp = self.session.get(url_format.format(
-                page=page, size=size, indus_code=indus_code, timestamp=timestamp))
+                page=page, size=size, indus_code=indus_info['code'], timestamp=timestamp))
             if rsp.status_code == 200 and rsp.json()['error_code'] == 0:
                 data = rsp.json()['data']
                 count = data['count']
                 stocks = data['list']
+                for s in stocks:
+                    stock_df.loc[stock_df.shape[0]] = {
+                        'code': s['symbol'], 
+                        'code_name': s['name'],
+                        'industry': indus_info['code_name']
+                    }
+                page += 1
+        return stock_df
+
+    def save_stock_industry_info(self):
+        print('download industry info')
+        list_level2info = self.get_indusrty_list()
+        indus_df = pd.DataFrame()
+        for info in list_level2info:
+            df = self.get_stock_of_indus(info)
+            indus_df = pd.concat([indus_df, df])
+        indus_df.to_csv('./raw_data/xueqiu_industry.csv', index=False)
 
 
 class DongcaiDownloader:
@@ -461,7 +481,7 @@ if __name__ == '__main__':
     # bao_d.get_from_xls('000300')
     # xueqiu_d.download_dkline('sh.600438', 52*5)
     # xueqiu_d.sync_stock_detail(['sh.600438', 'sh.600928'])
-    xueqiu_d.get_indusrty()
+    xueqiu_d.save_stock_industry_info()
     # dongcai_d.get_report('sh.601005')
     # dongcai_d.get_fund_holding('sh.600928')
     # dongcai_d.get_broker_predict('sh.600029')
