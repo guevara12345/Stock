@@ -27,11 +27,14 @@ class BaiscStockData:
         self.NO_INTEREST_CONCEPT = [
             'HS300_', 'MSCI中国', '标普概念', '富时概念', '中证500',
             '融资融券', '上证180_', '上证50_', '上证380']
-        modified_time = time.localtime(os.stat('./raw_data/xueqiu_industry.csv').st_mtime)
-        if datetime.now()-modified_time > timedelta(days=30):
+        INDUS_FILE = './raw_data/xueqiu_industry.csv'
+        if not os.path.exists(INDUS_FILE):
+            xueqiu_d.save_stock_industry_info()
+        modified_stamp = os.stat(INDUS_FILE).st_mtime
+        if time.time()-modified_stamp > 30*3600:
             xueqiu_d.save_stock_industry_info()
         self.industry = pd.read_csv(
-            './raw_data/xueqiu_industry.csv', index_col=1, encoding="gbk")
+            './raw_data/xueqiu_industry.csv', index_col=0, encoding="gbk")
 
     def hs300_index_component(self):
         file_path = os.path.join(os.getcwd(), f'raw_data/hs300_stocks.csv')
@@ -47,7 +50,7 @@ class BaiscStockData:
             if is_outdate is None:
                 is_outdate = self.check_index_component_outdate(
                     row[0], file_path)
-                # is_outdate = True
+                is_outdate = True
                 hs300_stocks.append(row)
             elif is_outdate == True:
                 # 获取一条记录，将记录合并在一起
@@ -83,7 +86,7 @@ class BaiscStockData:
             if is_outdate is None:
                 is_outdate = self.check_index_component_outdate(
                     row[0], file_path)
-                # is_outdate = True
+                is_outdate = True
                 zz500_stocks.append(row)
             elif is_outdate == True:
                 # 获取一条记录，将记录合并在一起
@@ -113,17 +116,21 @@ class BaiscStockData:
 
     def get_stock_detail(self, code):
         print(f'get stock info of {code}')
-        # code2capita = code_formatter.code2capita(code)
+        code2capita = code_formatter.code2capita(code)
         # rs = bs.query_stock_industry(code)
         # industry_list = []
         # while (rs.error_code == '0') & rs.next():
         #     # 获取一条记录，将记录合并在一起
         #     industry_list.append(rs.get_row_data())
         # industry = industry_list[0][3]
+        if code2capita in self.industry.index.tolist():
+            industry = self.industry.loc[code2capita, 'industry']
+        else:
+            industry = None
         pe_distr = self.get_ep_distr(code)
         return {
             'url': f'https://xueqiu.com/S/{code2capita}',
-            # 'industry': industry,
+            'industry': industry,
             'pe_max': pe_distr['pe_max'],
             'pe_mean': pe_distr['pe_mean'],
             'pe_min': pe_distr['pe_min'],
@@ -181,7 +188,7 @@ class BaiscStockData:
 basic = BaiscStockData()
 
 if __name__ == '__main__':
-    # basic.hs300_index_component()
-    # basic.zz500_index_component()
-    basic.get_ep_distr('sh.601919')
-    basic.get_ep_distr('sz.002493')
+    basic.hs300_index_component()
+    basic.zz500_index_component()
+    # basic.get_ep_distr('sh.601919')
+    # basic.get_ep_distr('sz.002493')

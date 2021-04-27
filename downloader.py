@@ -218,7 +218,7 @@ class XueqiuDownloader:
                 stocks = data['list']
                 for s in stocks:
                     stock_df.loc[stock_df.shape[0]] = {
-                        'code': s['symbol'], 
+                        'code': s['symbol'],
                         'code_name': s['name'],
                         'industry': indus_info['code_name']
                     }
@@ -232,7 +232,8 @@ class XueqiuDownloader:
         for info in list_level2info:
             df = self.get_stock_of_indus(info)
             indus_df = pd.concat([indus_df, df])
-        indus_df.to_csv('./raw_data/xueqiu_industry.csv', index=False)
+        indus_df.to_csv('./raw_data/xueqiu_industry.csv',
+                        index=False, encoding="gbk")
 
 
 class DongcaiDownloader:
