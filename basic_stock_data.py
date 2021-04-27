@@ -50,7 +50,7 @@ class BaiscStockData:
             if is_outdate is None:
                 is_outdate = self.check_index_component_outdate(
                     row[0], file_path)
-                is_outdate = True
+                # is_outdate = True
                 hs300_stocks.append(row)
             elif is_outdate == True:
                 # 获取一条记录，将记录合并在一起
@@ -86,7 +86,7 @@ class BaiscStockData:
             if is_outdate is None:
                 is_outdate = self.check_index_component_outdate(
                     row[0], file_path)
-                is_outdate = True
+                # is_outdate = True
                 zz500_stocks.append(row)
             elif is_outdate == True:
                 # 获取一条记录，将记录合并在一起
