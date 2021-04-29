@@ -12,6 +12,7 @@
             "code_name": "国瓷材料",
             "holding": false,
             "chg_date": "2021-04-28",
+            "chg_reason": ""
         },
         {
             "code": "sh.600460",
@@ -224,7 +225,7 @@
             "code_name": "航发动力",
             "chg_date": "2021-02-15",
             "chg_reason": ""
-        },
+        },   
         {
             "code": "sz.002241",
             "code_name": "歌尔股份",
