@@ -1,6 +1,20 @@
 {
     "watching_stocks": [
         {
+            "code": "sz.000725",
+            "code_name": "京东方A",
+            "holding": false,
+            "chg_date": "2021-04-28",
+            "chg_reason": ""
+        },
+        {
+            "code": "sz.300285",
+            "code_name": "国瓷材料",
+            "holding": false,
+            "chg_date": "2021-04-28",
+            "chg_reason": ""
+        },
+        {
             "code": "sz.300142",
             "code_name": "沃森生物",
             "holding": false,
